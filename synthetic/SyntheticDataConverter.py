@@ -58,4 +58,3 @@ class SyntheticDataConverter:
                         events[int(e[0])] = []
                         events[int(e[0])].append(event)
         return events
-
