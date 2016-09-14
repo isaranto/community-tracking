@@ -2,11 +2,13 @@ import cmd
 from synthetic import SyntheticDataConverter
 from plot import PlotGraphs
 from tensor import TensorFact
+from ged import GedLoad
 
 class CmdTool(cmd.Cmd):
     def __init__(self):
         cmd.Cmd.__init__(self)
         self.graphs = {}
+        self.comms = {}
         self.timeframes = 0
         self.type = ""
         print "Hi, choose one of the following options:"
@@ -15,8 +17,14 @@ class CmdTool(cmd.Cmd):
         """Give a GED compatible json file as input
         :param give the filepath as parameter
         """
-        self.file = fileName
-        print "got json file"
+        if not fileName:
+            fileName = "/home/lias/PycharmProjects/GED/test_input_community_edges.json"
+        ged = GedLoad(fileName)
+        self.graphs = ged.graphs
+        self.comms = ged.comms
+        self.timeframes = len(self.graphs)
+        self.type = "GED"
+        print "GED data have been loaded successfully!!!"
 
     def do_load_synthetic_data(self, filepath):
         """
@@ -31,15 +39,6 @@ class CmdTool(cmd.Cmd):
         self.timeframes = sd.timeframes
         self.type = sd.type
         print "Synthetic data have been successfully loaded!"
-        return
-
-    def do_load_ged_data(self, filepath):
-        """
-
-        :param filepath:
-        :return:
-        """
-        print "GED data have been loaded successfully!!!"
         return
 
     def do_create_tensor(self, e):

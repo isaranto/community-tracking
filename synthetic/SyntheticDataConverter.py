@@ -24,24 +24,23 @@ class SyntheticDataConverter:
         for i in range(1, self.timeframes+1):
             self.graphs[int(i)] = nx.Graph(self.edges[i])
 
-
     def get_edges(self):
         edge_time = {}
         for i, e_file in enumerate(self.edges_files, 1):
             edge_time[i] = []
             with open(self.filepath+e_file, 'r') as fp:
                 for line in fp:
-                    edge_time[i].append((int(line.split()[0]),int(line.split()[1])))
+                    edge_time[i].append((int(line.split()[0]), int(line.split()[1])))
         return edge_time
 
     def get_comms(self):
         com_time = {}
-        for i, c_file in enumerate(self.comm_files, 1):
+        for timeframe, c_file in enumerate(self.comm_files, 1):
             with open(self.filepath+c_file, 'r') as fp:
                 comms = {}
                 for j, line in enumerate(fp, 1):
                     comms[int(j)] = [int(node) for node in line.split()]
-            com_time[int(i)] = comms
+            com_time[int(timeframe)] = comms
         return com_time
 
     def get_events(self):

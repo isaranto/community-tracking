@@ -1,1 +1,1 @@
-from GedConverter import GedConverter
+from GedLoad import GedLoad

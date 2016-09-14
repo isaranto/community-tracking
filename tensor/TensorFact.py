@@ -10,13 +10,13 @@ class TensorFact:
 
     def create_tensor(self, graphs, timeframes):
         # set the number of nodes to the biggest graph found in the timeframes
-        nodes = set([node for i in range(1, timeframes+1) for node in nx.nodes(graphs[i])])
+        nodes = list(set([node for i in range(1, timeframes+1) for node in nx.nodes(graphs[i])]))
         n = len(nodes)
         s = timeframes
         tensor = np.zeros((n+1, n+1, s))
-        for i, node in enumerate(nodes):
-            tensor[i+1, 0, :] = node
-            tensor[0, i+1, :] = node
+        for i, node in enumerate(nodes, 1):
+            tensor[i, 0, :] = node
+            tensor[0, i, :] = node
         for i in range(1, timeframes):
             for u, v in graphs[i].edges_iter():
                 tensor[u, v, i] = 1
@@ -27,5 +27,5 @@ class TensorFact:
         logging.basicConfig(level=logging.DEBUG)
         T = dtensor(self.tensor)
         # Decompose tensor using CP-ALS
-        P, fit, itr, exectimes = cp_als(T, 1, init='random')
-        print P.shape, fit, itr
+        p, fit, itr, exectimes = cp_als(T, 1, init='random')
+        print p.shape, fit, itr
