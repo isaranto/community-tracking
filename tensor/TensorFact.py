@@ -13,7 +13,7 @@ class TensorFact:
         nodes = list(set([node for i in range(1, timeframes+1) for node in nx.nodes(graphs[i])]))
         n = len(nodes)
         s = timeframes
-        tensor = np.zeros((n+1, n+1, s))
+        tensor = np.zeros((n+1, n+1, s), dtype='float32')
         for i, node in enumerate(nodes, 1):
             tensor[i, 0, :] = node
             tensor[0, i, :] = node
