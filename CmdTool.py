@@ -1,13 +1,14 @@
 import cmd
 from synthetic import SyntheticDataConverter
 from plot import PlotGraphs
+from tensor import TensorFact
 
 class CmdTool(cmd.Cmd):
     def __init__(self):
         cmd.Cmd.__init__(self)
         self.graphs = {}
         self.timeframes = 0
-        self.type =""
+        self.type = ""
         print "Hi, choose one of the following options:"
 
     def do_load_ged_data(self, fileName):
@@ -39,6 +40,14 @@ class CmdTool(cmd.Cmd):
         :return:
         """
         print "GED data have been loaded successfully!!!"
+        return
+
+    def do_create_tensor(self, e):
+        """
+
+        :return:
+        """
+        TensorFact(self.graphs, self.timeframes)
         return
 
     def do_plot_graphs(self, e):
