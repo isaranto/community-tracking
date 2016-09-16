@@ -10,6 +10,7 @@ class CmdTool(cmd.Cmd):
         self.graphs = {}
         self.comms = {}
         self.timeframes = 0
+        self.timeline = {}
         self.type = ""
         print "Hi, choose one of the following options:"
 
@@ -37,6 +38,7 @@ class CmdTool(cmd.Cmd):
         sd= SyntheticDataConverter(filepath)
         self.graphs = sd.graphs
         self.timeframes = sd.timeframes
+        self.timeline = sd.get_timeline()
         self.type = sd.type
         print "Synthetic data have been successfully loaded!"
         return

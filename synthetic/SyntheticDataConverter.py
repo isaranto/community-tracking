@@ -16,6 +16,7 @@ class SyntheticDataConverter:
         self.edges_files = [item for item in sorted(files) if item.endswith('edges')]
         self.comm_files = [item for item in sorted(files) if item.endswith('comm')]
         self.event_file = [item for item in sorted(files) if item.endswith('events')]
+        self.timeline_file = [item for item in sorted(files) if item.endswith('timeline')]
         self.timeframes = len(self.edges_files)
         self.edges = self.get_edges()
         self.communities = self.get_comms()
@@ -57,3 +58,22 @@ class SyntheticDataConverter:
                         events[int(e[0])] = []
                         events[int(e[0])].append(event)
         return events
+
+    def get_timeline(self):
+        """
+        Returns an ordered dictionary in the form dict[dynamic community][timeframe] = community
+
+        :return:
+        """
+        dyn_communities = {}
+        # TODO maybe we can use OrderedDict if appropriate
+        for i, _file in enumerate(self.timeline_file, 1):
+            with open(self.filepath+_file, 'r') as fp:
+                for line in fp:
+                    timeline = {}
+                    comm = int(line.split(":")[0].translate(None, "M"))
+                    time_list = line.split(":")[1].strip().strip(",").split(",")
+                    for time, value in enumerate(time_list, 1):
+                        timeline[time] = int(value.split("=")[1])
+                    dyn_communities[comm] = timeline
+        return dyn_communities
