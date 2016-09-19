@@ -106,6 +106,7 @@ tmtagsHistory
 .bundle
 
 test.py
+test1.py
 keys.p
 *.json
 bin/

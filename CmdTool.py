@@ -1,8 +1,9 @@
 import cmd
-from synthetic import SyntheticDataConverter
+from synthetic import SyntheticDataConverter, Evaluation
 from plot import PlotGraphs
 from tensor import TensorFact
-from ged import GedLoad
+from ged import GedLoad, GedWrite
+
 
 class CmdTool(cmd.Cmd):
     def __init__(self):
@@ -25,7 +26,17 @@ class CmdTool(cmd.Cmd):
         self.comms = ged.comms
         self.timeframes = len(self.graphs)
         self.type = "GED"
-        print "GED data have been loaded successfully!!!"
+        print "GED data have been loaded successfully!"
+
+    def do_write_ged(self, fileName):
+        """Output a json file as needed for GED evaluation
+
+        :param fileName: the name of the file to be written
+        :return:
+        """
+        GedWrite(self, fileName)
+        print "Data have been exported successfully!"
+
 
     def do_load_synthetic_data(self, filepath):
         """
@@ -37,6 +48,7 @@ class CmdTool(cmd.Cmd):
             filepath = "/home/lias/Dropbox/Msc/thesis/src/NEW/synthetic-data-generator/src/expand/"
         sd= SyntheticDataConverter(filepath)
         self.graphs = sd.graphs
+        self.comms = sd.communities
         self.timeframes = sd.timeframes
         self.timeline = sd.get_timeline()
         self.type = sd.type
