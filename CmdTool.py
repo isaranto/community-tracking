@@ -4,7 +4,6 @@ from plot import PlotGraphs
 from tensor import TensorFact
 from ged import GedLoad, GedWrite
 
-
 class CmdTool(cmd.Cmd):
     def __init__(self):
         cmd.Cmd.__init__(self)
@@ -37,23 +36,26 @@ class CmdTool(cmd.Cmd):
         GedWrite(self, fileName)
         print "Data have been exported successfully!"
 
-
-    def do_load_synthetic_data(self, filepath):
+    def do_load_synthetic_data(self, filepath, evaluate=True):
         """
-
-        :param filepath:
+        Load synthetic data
+        :param filepath: the path of the folder where
+        :param evaluate: boolean operator whether to evaluate data or not
         :return:
         """
         if not filepath:
             filepath = "/home/lias/Dropbox/Msc/thesis/src/NEW/synthetic-data-generator/src/expand/"
-        sd= SyntheticDataConverter(filepath)
+        sd = SyntheticDataConverter(filepath)
         self.graphs = sd.graphs
         self.comms = sd.communities
         self.timeframes = sd.timeframes
         self.timeline = sd.get_timeline()
         self.type = sd.type
         print "Synthetic data have been successfully loaded!"
+        if evaluate:
+            Evaluation(sd)
         return
+
 
     def do_create_tensor(self, e):
         """
@@ -76,6 +78,7 @@ class CmdTool(cmd.Cmd):
         exit the program
         """
         return True
+
 
 if __name__ == '__main__':
     CmdTool().cmdloop()

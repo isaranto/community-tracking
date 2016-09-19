@@ -4,7 +4,10 @@ import networkx as nx
 
 class SyntheticDataConverter:
     def __init__(self, filepath):
-        self.filepath = filepath
+        if not filepath.endswith("/"):
+            self.filepath = filepath+"/"
+        else:
+            self.filepath = filepath
         files = os.listdir(filepath)
         if any(item.startswith('expand') for item in files):
             self.type = 'expand-contract'
