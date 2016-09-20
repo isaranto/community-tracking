@@ -10,7 +10,7 @@ class Evaluation:
         if self.type=='expand-contract':
             self.count_faults()
         else:
-            print "Evaluation for ", self.type " events has not been added yet."
+            print "Evaluation for ", self.type, " events has not been added yet."
 
     def count_faults(self):
         faults = 0
