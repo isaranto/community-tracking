@@ -3,12 +3,12 @@ import networkx as nx
 
 
 class SyntheticDataConverter:
-    def __init__(self, filepath):
-        if not filepath.endswith("/"):
-            self.filepath = filepath+"/"
+    def __init__(self, filePath):
+        if not filePath.endswith("/"):
+            self.filePath = filePath+"/"
         else:
-            self.filepath = filepath
-        files = os.listdir(filepath)
+            self.filePath = filePath
+        files = os.listdir(filePath)
         if any(item.startswith('expand') for item in files):
             self.type = 'expand-contract'
         elif any(item.startswith('birthdeath') for item in files):
@@ -20,37 +20,37 @@ class SyntheticDataConverter:
         self.comm_files = [item for item in sorted(files) if item.endswith('comm')]
         self.event_file = [item for item in sorted(files) if item.endswith('events')]
         self.timeline_file = [item for item in sorted(files) if item.endswith('timeline')]
-        self.timeframes = len(self.edges_files)
+        self.timeFrames = len(self.edges_files)
         self.edges = self.get_edges()
         self.communities = self.get_comms()
         self.events = self.get_events()
         self.graphs = {}
-        for i in range(1, self.timeframes+1):
+        for i in range(1, self.timeFrames+1):
             self.graphs[int(i)] = nx.Graph(self.edges[i])
 
     def get_edges(self):
         edge_time = {}
         for i, e_file in enumerate(self.edges_files, 1):
             edge_time[i] = []
-            with open(self.filepath+e_file, 'r') as fp:
+            with open(self.filePath+e_file, 'r') as fp:
                 for line in fp:
                     edge_time[i].append((int(line.split()[0]), int(line.split()[1])))
         return edge_time
 
     def get_comms(self):
         com_time = {}
-        for timeframe, c_file in enumerate(self.comm_files, 1):
-            with open(self.filepath+c_file, 'r') as fp:
+        for timeFrame, c_file in enumerate(self.comm_files, 1):
+            with open(self.filePath+c_file, 'r') as fp:
                 comms = {}
                 for j, line in enumerate(fp, 1):
                     comms[int(j)] = [int(node) for node in line.split()]
-            com_time[int(timeframe)] = comms
+            com_time[int(timeFrame)] = comms
         return com_time
 
     def get_events(self):
         events = {}
         for i, e_file in enumerate(self.event_file, 1):
-            with open(self.filepath+e_file, 'r') as fp:
+            with open(self.filePath+e_file, 'r') as fp:
                 for line in fp:
                     event = {}
                     e = line.strip().split(',')
@@ -71,7 +71,7 @@ class SyntheticDataConverter:
         dyn_communities = {}
         # TODO maybe we can use OrderedDict if appropriate
         for i, _file in enumerate(self.timeline_file, 1):
-            with open(self.filepath+_file, 'r') as fp:
+            with open(self.filePath+_file, 'r') as fp:
                 for line in fp:
                     timeline = {}
                     comm = int(line.split(":")[0].translate(None, "M"))

@@ -4,9 +4,9 @@ import json
 
 
 class GedLoad:
-    def __init__(self, fileName):
-        fileName = "/home/lias/PycharmProjects/GED/test_input_community_edges.json"
-        self.data = self.openFile(fileName)
+    def __init__(self, filename):
+        filename = "/home/lias/PycharmProjects/GED/test_input_community_edges.json"
+        self.data = self.openFile(filename)
         self.graphs, self.comms = self.getGraphs()
 
     def openFile(self, _file):
