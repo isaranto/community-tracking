@@ -7,7 +7,7 @@ class Evaluation:
         self.comms = sd.communities
         print "Now evaluating data..."
         self.type = sd.type
-        self.filepath = sd.filepath
+        self.filePath = sd.filePath
         if self.type == 'expand-contract':
             self.count_faults()
         else:
@@ -33,5 +33,5 @@ class Evaluation:
         eval =  str(faults/total*100) + "% of events were wrong. Counted "+ str(faults)+ " in a total of "+str(
             total) + " events"
         print eval
-        with open(self.filepath+"evaluation.txt", 'w') as fp:
+        with open(self.filePath+"evaluation.txt", 'w') as fp:
             fp.write(eval)

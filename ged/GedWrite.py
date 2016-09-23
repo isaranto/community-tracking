@@ -19,7 +19,6 @@ class GedWrite:
         output = {"windows": []}
         #output["windows"] = []
         for tf in self.timeFrames:
-            print tf
             communities = []
             # print tf, self.comms[tf]
             for _id, comm in self.comms[tf].items():
@@ -32,5 +31,5 @@ class GedWrite:
                             edges.append([u, v])
                 communities.append(edges)
             output["windows"].append({"communities": communities})
-        with open(self.fileName, 'w') as f:
+        with open("./data/"+self.fileName, 'w') as f:
             json.dump(output, f, indent=2)

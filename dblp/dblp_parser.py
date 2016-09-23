@@ -105,3 +105,10 @@ class dblp_loader:
         for year in range(start_year, end_year+1):
             graphs[year] = nx.Graph(self.edges[year])
         return graphs
+
+
+if __name__=='__main__':
+    filename = "../data/dblp/my_dblp_data.json"
+    dblp = dblp_loader(filename, start_year=2000, end_year=2004)
+    for year, graph in dblp.graphs.iteritems():
+        print year, graph.number_of_nodes()

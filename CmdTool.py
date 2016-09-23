@@ -16,9 +16,17 @@ class CmdTool(cmd.Cmd):
         self.type = ""
         print "Hi, choose one of the following options:"
 
+    def do_print_data_info(self, e):
+        print "timeframes :", [key for key in self.graphs]
+        print "# of communities per timeframe", [len(comms) for tf, comms in self.graphs.iteritems()]
+        print self.type
+
+    def do_clear_memory(self, e):
+        CmdTool().cmdloop()
+
     def do_load_ged_data(self, filename):
         """Give a GED compatible json file as input
-        :param give the filepath as parameter
+        :param give the filePath as parameter
         """
         if not filename:
             filename = "/home/lias/PycharmProjects/GED/test_input_community_edges.json"
@@ -38,16 +46,16 @@ class CmdTool(cmd.Cmd):
         GedWrite(self, filename)
         print "Data have been exported successfully!"
 
-    def do_load_synthetic_data(self, filepath, evaluate=True):
+    def do_load_synthetic_data(self, filePath, evaluate=False):
         """
         Load synthetic data
-        :param filepath: the path of the folder where
+        :param filePath: the path of the folder where
         :param evaluate: boolean operator whether to evaluate data or not
         :return:
         """
-        if not filepath:
-            filepath = "/home/lias/Dropbox/Msc/thesis/src/NEW/synthetic-data-generator/src/expand/"
-        sd = SyntheticDataConverter(filepath)
+        if not filePath:
+            filePath = "/home/lias/Dropbox/Msc/thesis/src/NEW/synthetic-data-generator/src/expand/"
+        sd = SyntheticDataConverter(filePath)
         self.graphs = sd.graphs
         self.comms = sd.communities
         self.timeFrames = sd.timeFrames
