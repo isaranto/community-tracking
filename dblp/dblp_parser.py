@@ -78,7 +78,8 @@ class dblp_loader:
         self.edges = self.get_edges(start_year, end_year)
         self.graphs = self.get_graphs(start_year, end_year)
         self.timeFrames = range(start_year, end_year+1)
-        self.communities = self.get_comms()
+        #self.communities = self.get_comms(start_year, end_year)
+        self.communities = self.test_com(start_year, end_year)
 
     def get_edges(self, start_year, end_year):
         edge_time = {}
@@ -91,12 +92,18 @@ class dblp_loader:
                         edge_time[int(year)].append((u, v))
         return edge_time
 
-    def get_comms(self):
+    def get_comms(self, start_year, end_year):
         com_time = {}
-        for year, confs in self.data.iteritems():
+        for year in range(start_year, end_year+1):
+        # for year, confs in self.data.iteritems():
             comms = {}
-            for i, (conf, papers) in enumerate(confs.iteritems(), 1):
-                comms[i] = [author for paper in papers for author in paper]
+            for i, (conf, papers) in enumerate(self.data[year].iteritems(), 1):
+                com = [author for paper in papers for author in paper]
+                # get rid of empty confs
+                if len(com) == 0:
+                    continue
+                else:
+                    comms[i] = com
             com_time[year] = comms
         return com_time
 
@@ -106,9 +113,61 @@ class dblp_loader:
             graphs[year] = nx.Graph(self.edges[year])
         return graphs
 
+    def test_com(self,start_year, end_year):
+        conf_list = []
+        with open('../data/dblp/confs.txt', 'r') as fp:
+            for conf in fp:
+                conf_list.append(conf.strip().lower())
+        com_time = {}
+        for year in range(start_year, end_year+1):
+        # for year, confs in self.data.iteritems():
+            comms = {}
+            for i, conf in enumerate(conf_list, 1):
+                com = []
+                try:
+                    for paper in self.data[year][conf]:
+                        for author in paper:
+                            com.append(author)
+                    #com = [author for paper in self.data[year][conf] for author in paper]
+                except:
+                    #print(year, conf)
+                    pass
+                # get rid of empty confs
+                if len(com) == 0:
+                    continue
+                else:
+                    comms[i] = com
+            com_time[year] = comms
+        return com_time
+
+    def get_stats(self):
+        length = {}
+        for year, confs in dblp.data.iteritems():
+            for conf, papers in confs.iteritems():
+                conf_len = 0
+                for paper in papers:
+                    for author in papers:
+                        conf_len += 1
+                if conf_len>0:
+                    try:
+                        length[conf][year] = conf_len
+                    except KeyError:
+                        length[conf]= {year:conf_len}
+        confs =[]
+        for name, years in length.iteritems():
+            parts_list = [parts for year, parts in years.iteritems() if year in range(2000, 2005)]
+            if len(years)> 10 and all(parts_list[i]>=1000 for i in range(len(parts_list))):
+                    confs.append(name)
+        return length
+
+
 
 if __name__=='__main__':
     filename = "../data/dblp/my_dblp_data.json"
     dblp = dblp_loader(filename, start_year=2000, end_year=2004)
-    for year, graph in dblp.graphs.iteritems():
-        print year, graph.number_of_nodes()
+    stats = dblp.get_stats()
+    print stats
+
+
+
+

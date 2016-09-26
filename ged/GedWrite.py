@@ -20,7 +20,7 @@ class GedWrite:
         #output["windows"] = []
         for tf in self.timeFrames:
             communities = []
-            # print tf, self.comms[tf]
+            print "Now processing time frame ", tf
             for _id, comm in self.comms[tf].items():
                 edges = []
                 # use all permutations of the possible edges in a community
