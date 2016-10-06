@@ -92,13 +92,13 @@ class CmdTool(cmd.Cmd):
         TensorFact(self.graphs, self.timeFrames)
         return
 
-    def do_plot_graphs(self, e):
+    def do_plot_graphs(self, node_size):
         """
 
         :param e:
         :return:
         """
-        PlotGraphs(self.graphs, self.timeFrames, self.type)
+        PlotGraphs(self.graphs, self.timeFrames, self.type, node_size)
         return
 
     def do_exit(self, e):

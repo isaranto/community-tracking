@@ -1,7 +1,7 @@
 import os
 import networkx as nx
 
-
+#TODO: get rid of false events
 class SyntheticDataConverter:
     def __init__(self, filePath):
         if not filePath.endswith("/"):

@@ -3,6 +3,7 @@ import json
 import re
 from itertools import combinations_with_replacement
 import networkx as nx
+import pprint
 
 
 class dblp_parser:
@@ -79,7 +80,9 @@ class dblp_loader:
         self.graphs = self.get_graphs(start_year, end_year)
         self.timeFrames = range(start_year, end_year+1)
         #self.communities = self.get_comms(start_year, end_year)
-        self.communities = self.test_com(start_year, end_year)
+        self.conf_communities = self.test_com(start_year, end_year)
+        # self.cc_communities = self.cc_com(start_year, end_year)
+
 
     def get_edges(self, start_year, end_year):
         edge_time = {}
@@ -130,7 +133,7 @@ class dblp_loader:
                             com.append(author)
                     #com = [author for paper in self.data[year][conf] for author in paper]
                 except:
-                    #print(year, conf)
+                    # print(year, conf)
                     pass
                 # get rid of empty confs
                 if len(com) == 0:
@@ -146,13 +149,12 @@ class dblp_loader:
             for conf, papers in confs.iteritems():
                 conf_len = 0
                 for paper in papers:
-                    for author in papers:
-                        conf_len += 1
+                    conf_len += len(paper)
                 if conf_len>0:
                     try:
                         length[conf][year] = conf_len
                     except KeyError:
-                        length[conf]= {year:conf_len}
+                        length[conf]= {year : conf_len}
         confs =[]
         for name, years in length.iteritems():
             parts_list = [parts for year, parts in years.iteritems() if year in range(2000, 2005)]
@@ -165,9 +167,8 @@ class dblp_loader:
 if __name__=='__main__':
     filename = "../data/dblp/my_dblp_data.json"
     dblp = dblp_loader(filename, start_year=2000, end_year=2004)
-    stats = dblp.get_stats()
-    print stats
-
-
-
-
+    """stats = dblp.get_stats()
+    pprint.pprint(dblp.data, indent=4, width=2)"""
+    print dblp.graphs
+    for i, graph in dblp.graphs.iteritems():
+        print i, nx.number_connected_components(graph)
