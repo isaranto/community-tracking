@@ -66,17 +66,19 @@ class CmdTool(cmd.Cmd):
             Evaluation(sd)
         return
 
-    def do_load_dblp(self, filename, start_year=2000, end_year=2004):
+    def do_load_dblp(self, filename, start_year=2000, end_year=2004, conf_file ='data/dblp/confs.txt',
+                     coms='components'):
         """
         Load dblp dataset between years given
         :param filename:
-        :param start_year: the start year
-        :param end_year: the end year
+        :param start_year:
+        :param end_year:
+        :param coms: ground truth communities or conferences 'confs' or 'components'
         :return:
         """
         if not filename:
             filename = "data/dblp/my_dblp_data.json"
-        dblp = dblp_loader(filename, start_year=2000, end_year=2004)
+        dblp = dblp_loader(filename, start_year=start_year, end_year=end_year, conf_file=conf_file, coms=coms)
         self.graphs = dblp.graphs
         self.comms = dblp.communities
         self.timeFrames = dblp.timeFrames

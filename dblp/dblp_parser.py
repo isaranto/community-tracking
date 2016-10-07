@@ -72,26 +72,37 @@ class dblp_parser:
 
 
 class dblp_loader:
-    def __init__(self, _file, start_year=1959, end_year=2017):
+    def __init__(self, _file, start_year, end_year, conf_file ='../data/dblp/confs.txt', coms='conf'):
         with open(_file, 'r')as fp:
             # load json and convert year-keys to int
             self.data = {int(k): v for k, v in json.load(fp).items()}
+        self.conf_list = self.read_conf_list(conf_file)
         self.edges = self.get_edges(start_year, end_year)
         self.graphs = self.get_graphs(start_year, end_year)
         self.timeFrames = range(start_year, end_year+1)
-        # self.communities = self.get_comms(start_year, end_year)
-        #self.conf_communities = self.get_conf_com(start_year, end_year)
-        self.cc_communities = self.get_cc_com(start_year, end_year)
+        #self.communities = self.get_comms(start_year, end_year)
+        if coms == 'conf':
+            self.communities = self.get_conf_com(start_year, end_year)
+        else:
+            self.communities = self.get_cc_com(start_year, end_year)
 
     def get_edges(self, start_year, end_year):
+        """
+        Get the edges for the authors that include a paper
+        in the conferences specified in the confs.txt
+        :param start_year:
+        :param end_year:
+        :return:
+        """
         edge_time = {}
         # for year, confs in self.data.iteritems():
         for year in range(start_year, end_year+1):
             edge_time[int(year)] = []
-            for conf, auth_list in self.data[year].iteritems():
-                for authors in auth_list:
-                    for u, v in combinations_with_replacement(authors, 2):
-                        edge_time[int(year)].append((u, v))
+            for conf, paper_list in self.data[year].iteritems():
+                if conf in self.conf_list:
+                    for authors in paper_list:
+                        for u, v in combinations_with_replacement(authors, 2):
+                            edge_time[int(year)].append((u, v))
         return edge_time
 
     def get_comms(self, start_year, end_year):
@@ -121,6 +132,14 @@ class dblp_loader:
             graphs[year] = nx.Graph(self.edges[year])
         return graphs
 
+    def read_conf_list(self, conf_file):
+        conf_list = []
+        with open(conf_file, 'r') as fp:
+            for conf in fp:
+                conf_list.append(conf.strip().lower())
+        return conf_list
+
+
     def get_conf_com(self, start_year, end_year):
         """
         Returns the author communities for the conferences specified in confs.txt
@@ -128,15 +147,11 @@ class dblp_loader:
         :param end_year:
         :return:
         """
-        conf_list = []
-        with open('../data/dblp/confs.txt', 'r') as fp:
-            for conf in fp:
-                conf_list.append(conf.strip().lower())
         com_time = {}
         for year in range(start_year, end_year+1):
             # for year, confs in self.data.iteritems():
             comms = {}
-            for j, conf in enumerate(conf_list, 1):
+            for j, conf in enumerate(self.conf_list, 1):
                 com = []
                 try:
                     for paper in self.data[year][conf]:
@@ -165,7 +180,7 @@ class dblp_loader:
         for year, graph in self.graphs.iteritems():
             comms = {}
             for j, com in enumerate(list(nx.connected_components(graph)), 1):
-                if len(com) > 3:
+                if len(com) > 4:
                     comms[j] = list(com)
             com_time[year] = comms
         return com_time
