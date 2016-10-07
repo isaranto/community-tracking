@@ -1,1 +1,1 @@
-from muturank import muturank
+from muturank import Muturank

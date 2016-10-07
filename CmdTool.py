@@ -4,6 +4,7 @@ from dblp import dblp_parser, dblp_loader
 from plot import PlotGraphs
 from tensor import TensorFact
 from ged import GedLoad, GedWrite
+from muturank import Muturank
 
 
 class CmdTool(cmd.Cmd):
@@ -93,6 +94,17 @@ class CmdTool(cmd.Cmd):
         """
         TensorFact(self.graphs, self.timeFrames)
         return
+
+    def do_create_muturank_tensor(self, connections):
+        """
+
+        :param connections:
+        :return:
+        """
+        Muturank(self.graphs)
+        print("Tensor for use with Muturank")
+        return
+
 
     def do_plot_graphs(self, node_size):
         """
