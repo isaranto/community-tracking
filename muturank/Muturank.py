@@ -50,7 +50,6 @@ class Muturank:
     def prob(self, i, j):
         pass
 
-
     def prob(self, d, j):
         pass
 
@@ -72,6 +71,7 @@ class Muturank:
         # p_new
 
         # initializing p_star and q_star with random probabilities
+        # TODO: p* and q* should be 1/N and 1/m (the same goes for p0 and q0
         p_star = np.random.dirichlet(np.ones(len(self.nodes)))
         q_star = np.random.dirichlet(np.ones(len(self.graphs)))
         """
@@ -83,7 +83,7 @@ class Muturank:
         q_new = np.ones((len(q_star)))
         p_old = np.zeros((len(p_star)))
         q_old = np.zeros((len(q_star)))
-        # TODO: while ||p(t)-p(t-1)||^2 + ||q(t) - q(t-1||^2 >=e
+        # while ||p(t)-p(t-1)||^2 + ||q(t) - q(t-1||^2 >=e
         while np.linalg.norm(p_new-p_old)**2 + np.linalg.norm(q_new-q_old)**2 > self.e:
             p_old = p_new
             q_old = q_new
@@ -96,12 +96,6 @@ class Muturank:
             t += 1
         return p_new, q_new
 
-
-
-        # TODO:     { compute p(t+1) and q(t+1)
-        # TODO:     t = t+1 }
-        # TODO:
-        # TODO:
 
 
     def create_dataframes(self, tensor):

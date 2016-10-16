@@ -92,7 +92,7 @@ class CmdTool(cmd.Cmd):
         :param e:
         :return:
         """
-        TensorFact(self.graphs, self.timeFrames)
+        TensorFact(self.graphs,)
         return
 
     def do_create_muturank_tensor(self, connections):
