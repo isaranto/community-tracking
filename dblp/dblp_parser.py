@@ -81,6 +81,8 @@ class dblp_loader:
         self.graphs = self.get_graphs(start_year, end_year)
         self.timeFrames = range(start_year, end_year+1)
         #self.communities = self.get_comms(start_year, end_year)
+        conf_edges = self.get_conf_edges(start_year, end_year)
+        self.conf_graphs = self.get_conf_graphs(conf_edges, start_year, end_year)
         if coms == 'conf':
             self.communities = self.get_conf_com(start_year, end_year)
         else:
@@ -105,13 +107,44 @@ class dblp_loader:
                             edge_time[int(year)].append((u, v))
         return edge_time
 
-    def get_comms(self, start_year, end_year):
+    def get_conf_edges(self, start_year, end_year):
         """
-        this is being used to get all conferences as communities
+
         :param start_year:
         :param end_year:
         :return:
         """
+        edge_time = {}
+        # for year, confs in self.data.iteritems():
+        for year in range(start_year, end_year+1):
+            edge_time[int(year)] = {}
+            for conf, paper_list in self.data[year].iteritems():
+                if conf in self.conf_list:
+                    for authors in paper_list:
+                        for u, v in combinations_with_replacement(authors, 2):
+                            try:
+                                edge_time[int(year)][conf].append((u, v))
+                            except:
+                                edge_time[int(year)][conf] = [(u, v)]
+        return edge_time
+
+    def get_conf_graphs(self,conf_edges, start_year, end_year):
+        graphs = {}
+        for year, confs in conf_edges.iteritems():
+            for conf, edges in confs.iteritems():
+                try:
+                    graphs[int(year)][conf] = nx.Graph(edges)
+                except KeyError:
+                    pass
+        return graphs
+
+    """def get_comms(self, start_year, end_year):
+
+        this is being used to get all conferences as communities
+        :param start_year:
+        :param end_year:
+        :return:
+
         com_time = {}
         for year in range(start_year, end_year+1):
             # for year, confs in self.data.iteritems():
@@ -124,7 +157,7 @@ class dblp_loader:
                 else:
                     comms[j] = com
             com_time[year] = comms
-        return com_time
+        return com_time"""
 
     def get_graphs(self, start_year, end_year):
         graphs = {}
@@ -177,11 +210,14 @@ class dblp_loader:
         :return:
         """
         com_time = {}
-        for year, graph in self.graphs.iteritems():
+        for year, confs in self.conf_graphs.iteritems():
             comms = {}
-            for j, com in enumerate(list(nx.connected_components(graph)), 1):
-                if len(com) > 4:
-                    comms[j] = list(com)
+            com_id = 1
+            for _, graph in self.confs.iteritems():
+                for com in list(nx.connected_components(graph)):
+                    if len(com) > 3:
+                        comms[com_id] = list(com)
+                        com_id += 1
             com_time[year] = comms
         return com_time
 
@@ -208,8 +244,8 @@ class dblp_loader:
 if __name__ == '__main__':
     filename = "../data/dblp/my_dblp_data.json"
     dblp = dblp_loader(filename, start_year=2000, end_year=2004)
-    """stats = dblp.get_stats()
+    #pprint.pprint(dblp.communities[2000])
+    stats = dblp.get_stats()
     pprint.pprint(dblp.data, indent=4, width=2)
     for i, graph in dblp.graphs.iteritems():
         print i, nx.number_connected_components(graph)
-    """
