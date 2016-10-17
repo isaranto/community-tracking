@@ -5,6 +5,7 @@ from plot import PlotGraphs
 from tensor import TensorFact
 from ged import GedLoad, GedWrite
 from muturank import Muturank
+import pprint
 
 
 class CmdTool(cmd.Cmd):
@@ -19,7 +20,7 @@ class CmdTool(cmd.Cmd):
 
     def do_print_data_info(self, e):
         print "timeframes :", [key for key in self.graphs]
-        print "# of communities per timeframe", [len(comms) for tf, comms in self.graphs.iteritems()]
+        print "# of communities per timeframe", [len(comms) for tf, comms in self.comms.iteritems()]
         print self.type
 
     def do_clear_memory(self, e):
@@ -86,13 +87,16 @@ class CmdTool(cmd.Cmd):
         print "DBLP data have been successfully loaded!"
         return
 
-    def do_create_tensor(self, e):
+    def do_nntfact(self, e):
         """
 
         :param e:
         :return:
         """
-        TensorFact(self.graphs)
+        # num_of_coms = len(set([c for _,comms in self.comms.iteritems() for c in comms ]))
+        # set number of factors to the max number of communities in all timeframes
+        num_of_coms = max([len(comms) for tf, comms in self.comms.iteritems()])
+        TensorFact(self.graphs, num_of_coms)
         return
 
     def do_create_muturank_tensor(self, connections):
