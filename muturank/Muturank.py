@@ -2,18 +2,51 @@ from __future__ import division
 import networkx as nx
 import numpy as np
 import pandas as pd
+from sktensor import sptensor
+from copy import deepcopy
 
 
 
 class Muturank:
     def __init__(self, graphs, threshold):
         self.graphs = graphs
-        self.a, self.o, self.r = self.create_dense_tensors(graphs)
+        self.node_ids = list(set([node for i in graphs for node in nx.nodes(graphs[i])]))
+        # create a dict with {node_id : tensor_position} to be able to retrieve node_id
+        self.node_pos = {node_id: i for i, node_id in enumerate(self.node_ids)}
+        #self.a, self.o, self.r = self.create_dtensors(graphs)
+        self.a, self.o, self.r = self.create_sptensors()
         self.e = threshold
         # self.tensor= self.create_dense_tensors(graphs)
         # self.frame = self.create_dataframes(self.tensor)
 
-    def create_dense_tensors(self, graphs):
+    def create_sptensors(self):
+        """
+            Create a sparse tensor
+            :param graphs:
+            :return:
+            """
+        tuples = []
+        # triplets = np.array([(u, v, t) for t in range(1, len(graphs)+1) for u, v in graphs[i].edges_iter()] +
+        # [(v, u, t) for t in range(1, len(graphs)+1) for u, v in graphs[i].edges_iter()])
+        for i, (t, graph) in enumerate(graphs.iteritems()):
+            for u, v in graph.edges_iter():
+                tuples.append([self.node_pos[u], self.node_pos[v], i])
+                tuples.append([self.node_pos[v], self.node_pos[u], i])
+        triplets = np.array([(u, v, t) for u, v, t in tuples])
+        a = sptensor(tuple(triplets.T), vals=np.ones(len(triplets)), shape=(len(self.node_ids),
+                                                                                  len(self.node_ids),
+                                                                            len(graphs)))
+        o = deepcopy(a)
+        r = deepcopy(a)
+        print len([1 for (u,v,t) in tuples if u==i])
+        for t in range(a.shape[2]):
+            for j in range(a.shape[1]):
+                for i in range(a.shape[0]):
+                    if a[:, j, t].sum() != 0:
+                        o[i, j, t] = o[i, j, t]/(a[:, j, t].sum())
+        return a, o, r
+
+    def create_dtensors(self, graphs):
         """
         construct two transition probability tensors O =[O i,j,d] and R =[r i,j,d]
 
@@ -22,11 +55,10 @@ class Muturank:
         """
         n = 0
         # set the number of nodes to the biggest graph found in the timeframes
-        self.nodes = list(set([node for i in range(len(graphs)) for node in nx.nodes(graphs[i])]))
-        n = len(self.nodes)
+        n = len(self.node_ids)
         s = len(graphs)
         a = np.zeros((s, n+1, n+1))
-        for i, node in enumerate(self.nodes, 1):
+        for i, node in enumerate(self.node_ids, 1):
             a[:, i, 0] = node
             a[:, 0, i] = node
         for i in range(s):
@@ -72,11 +104,13 @@ class Muturank:
 
         # initializing p_star and q_star with random probabilities
         # TODO: p* and q* should be 1/N and 1/m (the same goes for p0 and q0
-        p_star = np.random.dirichlet(np.ones(len(self.nodes)))
-        q_star = np.random.dirichlet(np.ones(len(self.graphs)))
+        #p_star = np.random.dirichlet(np.ones(len(self.node_ids)))
+        #q_star = np.random.dirichlet(np.ones(len(self.graphs)))
+        p_star = [1/len(self.node_ids) for node in self.node_ids]
+        q_star = [1/len(self.graphs) for tf in self.graphs]
         """
         alternatively we set q_star and q_star equal to 1/n
-        p_star = np.ones(len(self.nodes))/len(self.nodes)
+        p_star = np.ones(len(self.node_ids))/len(self.node_ids)
         q_star = np.ones(len(self.graphs))/len(self.graphs)
         """
         p_new= np.ones((len(p_star)))
@@ -87,7 +121,7 @@ class Muturank:
         while np.linalg.norm(p_new-p_old)**2 + np.linalg.norm(q_new-q_old)**2 > self.e:
             p_old = p_new
             q_old = q_new
-            for i in range(len(self.nodes)):
+            for i in range(len(self.node_ids)):
                 # TODO: calculate p_new
                 p_new[i]= 0
             for d in range(len(self.graphs)):
@@ -106,10 +140,6 @@ class Muturank:
               index=tensor[1:, 0],    # 1st column as index
             columns=tensor[0, 1:])
 
-    def create_sp_tensors(self, graphs):
-        o = None
-        r = None
-        return o, r
 
 
 
@@ -123,10 +153,10 @@ if __name__ == '__main__':
     1: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7), (7, 8)],
     2: [(1, 2), (5, 6), (5, 8)]
     }"""
-
     graphs = {}
     for i, edges in edges.items():
         graphs[i] = nx.Graph(edges)
-    print Muturank(graphs).o
-    print Muturank(graphs).r
+    mutu = Muturank(graphs, 1e-6)
+    print mutu.a[mutu.node_pos[1],mutu.node_pos[4],1]
+    print mutu.r
 

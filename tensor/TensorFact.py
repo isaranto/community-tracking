@@ -7,7 +7,7 @@ import ncp
 class TensorFact:
     def __init__(self, graphs, num_of_coms):
         self.thres = 0
-        self.node_ids = list(set([node for i in range(1,len(graphs)+1) for node in nx.nodes(graphs[i])]))
+        self.node_ids = list(set([node for i in graphs for node in nx.nodes(graphs[i])]))
         # create a dict with {node_id : tensor_position} to be able to retrieve node_id
         self.node_pos = {node_id: i for i, node_id in enumerate(self.node_ids)}
         self.tensor = self.create_sptensor(graphs)
