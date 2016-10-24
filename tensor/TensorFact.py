@@ -84,14 +84,15 @@ class TensorFact:
         return T
 
     def nnfact_repeat(self,num_of_coms, num_of_seeds):
+        seed_list = np.random.randint(0,4294967295, num_of_seeds)
         min_error = 1
-        for seed in range(num_of_seeds):
+        for seed in seed_list:
             A, B, C, error = self.tensor_decomp(num_of_coms, seed)
             if error <= min_error:
                 best_seed = seed
                 min_error= error
         A, B, C, error = self.tensor_decomp(num_of_coms, best_seed)
-        print "Error = ", error
+        print "Error = ", error, " seed: ",best_seed
         print "A = \n", A,"\n B = \n", B,"\n C = \n", C
         return A, B, C
 
