@@ -3,10 +3,15 @@ import networkx as nx
 import numpy as np
 from sktensor import sptensor, dtensor, ktensor, cp_als
 import ncp
+from copy import deepcopy
+import math
+import pprint
 
 class TensorFact:
-    def __init__(self, graphs, num_of_coms):
-        self.thres = 0
+    def __init__(self, graphs, num_of_coms, threshold, seeds=20):
+        self.thres = threshold
+        self.graphs = graphs
+        self.add_self_edges()
         self.node_ids = list(set([node for i in graphs for node in nx.nodes(graphs[i])]))
         # create a dict with {node_id : tensor_position} to be able to retrieve node_id
         self.node_pos = {node_id: i for i, node_id in enumerate(self.node_ids)}
@@ -15,12 +20,32 @@ class TensorFact:
         B_org = np.random.rand(len(self.node_ids), num_of_coms)
         C_org = np.random.rand(len(graphs), num_of_coms)
         self.tensor = ktensor([A_org, B_org, C_org]).totensor()"""
-        #self.tensor = self.create_dtensor(graphs)
-        A, B, C = self.tensor_decomp(num_of_coms)
+        # self.tensor = self.create_dtensor(graphs)
+        A, B, C = self.nnfact_repeat(num_of_coms, seeds)
         self.comms = self.get_comms(A, B, C)
         self. timeline = self.get_timeline(C)
-        print self.comms
-        print self.timeline
+        print "communities: ",
+        pprint.pprint(self.comms, indent=2, width=80)
+        print "communities in timeframes: ",
+        pprint.pprint(self.timeline, indent=2, width=80)
+        self.get_fact_info(A)
+
+
+    def add_self_edges(self):
+        for i, graph in self.graphs.iteritems():
+            for v in graph.nodes():
+                graph.add_edge(v, v)
+
+    def get_fact_info(self, factor):
+        for j in range(factor.shape[1]):
+            for i in range(factor.shape[0]):
+                if factor[i, j] < 1e-6:
+                    factor[i, j] = 'nan'
+        mins = ('%f' % x for x in np.nanmin(factor, 0))
+        maxs = ('%f' % x for x in np.nanmax(factor, 0))
+        print "min values : ", [float(a) for a in mins]
+        print "max values : ", [float(a) for a in maxs]
+
 
     def create_dtensor(self, graphs):
         """
@@ -58,19 +83,37 @@ class TensorFact:
                                                                             len(graphs)))
         return T
 
-    def tensor_decomp(self, num_of_coms):
+    def nnfact_repeat(self,num_of_coms, num_of_seeds):
+        min_error = 1
+        for seed in range(num_of_seeds):
+            A, B, C, error = self.tensor_decomp(num_of_coms, seed)
+            if error <= min_error:
+                best_seed = seed
+                min_error= error
+        A, B, C, error = self.tensor_decomp(num_of_coms, best_seed)
+        print "Error = ", error
+        print "A = \n", A,"\n B = \n", B,"\n C = \n", C
+        return A, B, C
+
+    def tensor_decomp(self, num_of_coms, seed):
         # setting seed in order to reproduce experiment
-        np.random.seed(4)
+        np.random.seed(seed)
+        A_init = np.random.rand(self.tensor.shape[0], num_of_coms)
+        B_init =deepcopy(A_init)
+        C_init = np.random.rand(self.tensor.shape[2], num_of_coms)
+        Finit = [A_init, B_init, C_init]
+        #Finit = [np.random.rand(X.shape[i], r) for i in range(nWay)]
         X_approx_ks = ncp.nonnegative_tensor_factorization(self.tensor, num_of_coms, method='anls_bpp',
-                                                           stop_criterion=2)
+                                                           stop_criterion=2, init=Finit)
         A = X_approx_ks.U[0]
         B = X_approx_ks.U[1]
         C = X_approx_ks.U[2]
         error =(self.tensor - X_approx_ks.totensor()).norm() / self.tensor.norm()
-        print error
-        return A, B, C
+        return A, B, C, error
 
-    def get_comms(self, A, B ,C):
+
+
+    def get_comms(self, A, B, C):
         """
         Return communities in a dict of the form { com_id : [list with node_ids that
         belong to the community}
@@ -101,6 +144,7 @@ class TensorFact:
         return timeline
 
 
+
 if __name__ == '__main__':
     edges_old = {
         0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
@@ -115,6 +159,4 @@ if __name__ == '__main__':
     graphs = {}
     for i, edges in edges.items():
         graphs[i+1] = nx.Graph(edges)
-    fact = TensorFact(graphs, 2)
-
-
+    fact = TensorFact(graphs, num_of_coms=3, seeds=1, threshold=1e-4)

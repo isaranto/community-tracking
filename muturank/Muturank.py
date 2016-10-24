@@ -6,15 +6,14 @@ from sktensor import sptensor
 from copy import deepcopy
 
 
-
 class Muturank:
     def __init__(self, graphs, threshold):
         self.graphs = graphs
         self.node_ids = list(set([node for i in graphs for node in nx.nodes(graphs[i])]))
         # create a dict with {node_id : tensor_position} to be able to retrieve node_id
         self.node_pos = {node_id: i for i, node_id in enumerate(self.node_ids)}
-        #self.a, self.o, self.r = self.create_dtensors(graphs)
-        self.a, self.o, self.r = self.create_sptensors()
+        # self.a, self.o, self.r = self.create_dtensors(graphs)
+        #self.a, self.o, self.r = self.create_sptensors()
         self.e = threshold
         # self.tensor= self.create_dense_tensors(graphs)
         # self.frame = self.create_dataframes(self.tensor)
@@ -34,17 +33,27 @@ class Muturank:
                 tuples.append([self.node_pos[v], self.node_pos[u], i])
         triplets = np.array([(u, v, t) for u, v, t in tuples])
         a = sptensor(tuple(triplets.T), vals=np.ones(len(triplets)), shape=(len(self.node_ids),
-                                                                                  len(self.node_ids),
+                                                                            len(self.node_ids),
                                                                             len(graphs)))
-        o = deepcopy(a)
-        r = deepcopy(a)
-        print len([1 for (u,v,t) in tuples if u==i])
-        for t in range(a.shape[2]):
+
+        print a[:, self.node_pos[4], 1]
+        #print a.toarray().T
+        #print a[self.node_pos[1],self.node_pos[4], 0]
+        # o = deepcopy(a)
+        # r = deepcopy(a)
+        #print len([1 for (u,v,t) in tuples if u==i])
+        """for t in range(a.shape[2]):
             for j in range(a.shape[1]):
+                sum = 0
                 for i in range(a.shape[0]):
-                    if a[:, j, t].sum() != 0:
-                        o[i, j, t] = o[i, j, t]/(a[:, j, t].sum())
-        return a, o, r
+                    # TODO : just add another for loop instead of : to access .sum()
+                    # TODO : check sparse tensor performance and library
+                    sum += a[i, j, t]
+                if sum != 0:
+                    for i in range(a.shape[0]):
+                        tuples =
+                        o[i, j, t] = a[i, j, t]/sum"""
+        return a#, o, r
 
     def create_dtensors(self, graphs):
         """
@@ -157,6 +166,7 @@ if __name__ == '__main__':
     for i, edges in edges.items():
         graphs[i] = nx.Graph(edges)
     mutu = Muturank(graphs, 1e-6)
-    print mutu.a[mutu.node_pos[1],mutu.node_pos[4],1]
-    print mutu.r
+    #print mutu.a[mutu.node_pos[1],mutu.node_pos[4],1]
+    #print mutu.r
+    mutu.create_sptensors()
 

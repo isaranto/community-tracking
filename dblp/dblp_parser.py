@@ -83,6 +83,7 @@ class dblp_loader:
         #self.communities = self.get_comms(start_year, end_year)
         conf_edges = self.get_conf_edges(start_year, end_year)
         self.conf_graphs = self.get_conf_graphs(conf_edges, start_year, end_year)
+        # TODO: check why its returning empty comms
         if coms == 'conf':
             self.communities = self.get_conf_com(start_year, end_year)
         else:
@@ -244,7 +245,7 @@ class dblp_loader:
 if __name__ == '__main__':
     filename = "../data/dblp/my_dblp_data.json"
     dblp = dblp_loader(filename, start_year=2000, end_year=2004)
-    #pprint.pprint(dblp.communities[2000])
+    # pprint.pprint(dblp.communities[2000])
     stats = dblp.get_stats()
     pprint.pprint(dblp.data, indent=4, width=2)
     for i, graph in dblp.graphs.iteritems():

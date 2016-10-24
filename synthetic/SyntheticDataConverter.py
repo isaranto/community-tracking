@@ -27,6 +27,9 @@ class SyntheticDataConverter:
         self.graphs = {}
         for i in range(1, self.timeFrames+1):
             self.graphs[int(i)] = nx.Graph(self.edges[i])
+        self.add_self_edges()
+
+
 
     def get_edges(self):
         edge_time = {}
@@ -36,6 +39,11 @@ class SyntheticDataConverter:
                 for line in fp:
                     edge_time[i].append((int(line.split()[0]), int(line.split()[1])))
         return edge_time
+
+    def add_self_edges(self):
+        for i, graph in self.graphs.iteritems():
+            for v in graph.nodes():
+                graph.add_edge(v, v)
 
     def get_comms(self):
         com_time = {}
