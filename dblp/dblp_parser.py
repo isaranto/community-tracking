@@ -89,6 +89,7 @@ class dblp_loader:
         else:
             self.communities = self.get_cc_com(start_year, end_year)
 
+
     def get_edges(self, start_year, end_year):
         """
         Get the edges for the authors that include a paper
@@ -129,14 +130,14 @@ class dblp_loader:
                                 edge_time[int(year)][conf] = [(u, v)]
         return edge_time
 
-    def get_conf_graphs(self,conf_edges, start_year, end_year):
+    def get_conf_graphs(self, conf_edges, start_year, end_year):
         graphs = {}
         for year, confs in conf_edges.iteritems():
             for conf, edges in confs.iteritems():
                 try:
                     graphs[int(year)][conf] = nx.Graph(edges)
                 except KeyError:
-                    pass
+                    graphs[int(year)] = {conf: nx.Graph(edges)}
         return graphs
 
     """def get_comms(self, start_year, end_year):
@@ -214,9 +215,9 @@ class dblp_loader:
         for year, confs in self.conf_graphs.iteritems():
             comms = {}
             com_id = 1
-            for _, graph in self.confs.iteritems():
+            for _, graph in confs.iteritems():
                 for com in list(nx.connected_components(graph)):
-                    if len(com) > 3:
+                    if len(com) > 4:
                         comms[com_id] = list(com)
                         com_id += 1
             com_time[year] = comms
@@ -244,9 +245,10 @@ class dblp_loader:
 
 if __name__ == '__main__':
     filename = "../data/dblp/my_dblp_data.json"
-    dblp = dblp_loader(filename, start_year=2000, end_year=2004)
+    dblp = dblp_loader(filename, start_year=2000, end_year=2004, coms='components')
     # pprint.pprint(dblp.communities[2000])
-    stats = dblp.get_stats()
+    """stats = dblp.get_stats()
     pprint.pprint(dblp.data, indent=4, width=2)
     for i, graph in dblp.graphs.iteritems():
         print i, nx.number_connected_components(graph)
+"""
