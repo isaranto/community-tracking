@@ -83,7 +83,6 @@ class dblp_loader:
         #self.communities = self.get_comms(start_year, end_year)
         conf_edges = self.get_conf_edges(start_year, end_year)
         self.conf_graphs = self.get_conf_graphs(conf_edges, start_year, end_year)
-        # TODO: check why its returning empty comms
         if coms == 'conf':
             self.communities = self.get_conf_com(start_year, end_year)
         else:

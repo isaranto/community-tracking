@@ -87,7 +87,7 @@ class CmdTool(cmd.Cmd):
         print "DBLP data have been successfully loaded!"
         return
 
-    def do_nntfact(self, seeds, thres=1e-4 ):
+    def do_nntfact(self, seeds, thres=1e-4):
         """
 
         :param e:

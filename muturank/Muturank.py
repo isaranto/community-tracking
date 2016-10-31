@@ -13,7 +13,7 @@ class Muturank:
         # create a dict with {node_id : tensor_position} to be able to retrieve node_id
         self.node_pos = {node_id: i for i, node_id in enumerate(self.node_ids)}
         # self.a, self.o, self.r = self.create_dtensors(graphs)
-        #self.a, self.o, self.r = self.create_sptensors()
+        self.a, self.o, self.r = self.create_sptensors()
         self.e = threshold
         # self.tensor= self.create_dense_tensors(graphs)
         # self.frame = self.create_dataframes(self.tensor)
@@ -32,32 +32,55 @@ class Muturank:
                 tuples.append([self.node_pos[u], self.node_pos[v], i])
                 tuples.append([self.node_pos[v], self.node_pos[u], i])
         triplets = np.array([(u, v, t) for u, v, t in tuples])
+        np.ones(len(triplets))
         a = sptensor(tuple(triplets.T), vals=np.ones(len(triplets)), shape=(len(self.node_ids),
                                                                             len(self.node_ids),
-                                                                            len(graphs)))
-
-        print a[:, self.node_pos[4], 1]
-        #print a.toarray().T
-        #print a[self.node_pos[1],self.node_pos[4], 0]
-        # o = deepcopy(a)
-        # r = deepcopy(a)
-        #print len([1 for (u,v,t) in tuples if u==i])
-        """for t in range(a.shape[2]):
-            for j in range(a.shape[1]):
-                sum = 0
-                for i in range(a.shape[0]):
+                                                                          len(graphs)))
+        o_values = []
+        for t in range(a.shape[2]):
+            sum = []
+            for i in range(a.shape[0]):
+                for j in range(a.shape[1]):
                     # TODO : just add another for loop instead of : to access .sum()
                     # TODO : check sparse tensor performance and library
-                    sum += a[i, j, t]
-                if sum != 0:
-                    for i in range(a.shape[0]):
-                        tuples =
-                        o[i, j, t] = a[i, j, t]/sum"""
-        return a#, o, r
+                    try:
+                        sum[i] += a[i, j, t]
+                    except IndexError:
+                        sum.append(a[i, j, t])
+            for i in range(a.shape[0]):
+                if sum[i] != 0:
+                    for j in range(i):
+                        if a[i, j, t] != 0:
+                            o_values.append(a[j, i, t]/sum[j])
+                            o_values.append(a[i, j, t]/sum[i])
+        o = sptensor(tuple(triplets.T), vals=o_values, shape=(len(self.node_ids),
+                                                                            len(self.node_ids),
+                                                                          len(graphs)))
+        r_values = []
+        sum = np.zeros((a.shape[0], a.shape[1]))
+        for i in range(a.shape[0]):
+            # TODO: sum is a dense matrix/array. Should be sparse for memory
+            for j in range(a.shape[1]):
+                for t in range(a.shape[2]):
+                    # TODO : just add another for loop instead of : to access .sum()
+                    # TODO : check sparse tensor performance and library
+                    if a[i, j, t] != 0:
+                        sum[i, j] += a[i, j, t]
+        for t in range(a.shape[2]):
+            for i in range(a.shape[0]):
+                for j in range(i):
+                    if a[j, i, t] != 0:
+                        r_values.append(a[j, i, t]/sum[j, i])
+                        r_values.append(a[i, j, t]/sum[i, j])
+        r = sptensor(tuple(triplets.T), vals=r_values, shape=(len(self.node_ids),
+                                                                            len(self.node_ids),
+                                                                          len(graphs)))
+
+        return a, o, r
 
     def create_dtensors(self, graphs):
         """
-        construct two transition probability tensors O =[O i,j,d] and R =[r i,j,d]
+        construct two transition probability tensors O =[o i,j,d] and R =[r i,j,d]
 
         :param graphs:
         :return:
@@ -144,7 +167,7 @@ class Muturank:
     def create_dataframes(self, tensor):
         dataframes = {}
         for i in range(tensor.shape[0]):
-            print i
+            pass
         pd.DataFrame(data=tensor[1:, 1:],    # values
               index=tensor[1:, 0],    # 1st column as index
             columns=tensor[0, 1:])
@@ -168,5 +191,4 @@ if __name__ == '__main__':
     mutu = Muturank(graphs, 1e-6)
     #print mutu.a[mutu.node_pos[1],mutu.node_pos[4],1]
     #print mutu.r
-    mutu.create_sptensors()
 

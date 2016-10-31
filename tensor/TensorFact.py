@@ -84,7 +84,7 @@ class TensorFact:
         return T
 
     def nnfact_repeat(self,num_of_coms, num_of_seeds):
-        seed_list = np.random.randint(0,4294967295, num_of_seeds)
+        seed_list = np.random.randint(0, 4294967295, num_of_seeds)
         min_error = 1
         for seed in seed_list:
             A, B, C, error = self.tensor_decomp(num_of_coms, seed)
