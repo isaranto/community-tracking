@@ -18,6 +18,8 @@ class Muturank:
         self.alpha = alpha
         self.beta = beta
         self.run_muturank()
+        print sum(self.p_new)
+        print sum(self.q_new)
         # self.tensor= self.create_dense_tensors(graphs)
         # self.frame = self.create_dataframes(self.tensor)
 
@@ -58,7 +60,7 @@ class Muturank:
         r_values = []
         sum_time = np.zeros((a.shape[0], a.shape[1]))
         for i in range(a.shape[0]):
-            # TODO: sum is a dense matrix/array. Should be sparse for memory
+            # OPTIMIZE: sum is a dense matrix/array. Should be sparse for memory
             for j in range(a.shape[1]):
                 for t in range(a.shape[2]):
                     # TODO : just add another for loop instead of : to access .sum()
@@ -110,14 +112,15 @@ class Muturank:
         return a, o, r
 
     def prob_t(self, d, j):
-        # TODO: calculate denominator once for both probabilities
+        # OPTIMIZE: calculate denominator once for both probabilities
         p = (self.q_new[d]*self.sum_row[j, d])/sum([self.q_new[d]*self.a[j, l, m]
                                                     for l in range(len(self.node_ids))
                                                     for m in range(len(self.graphs))])
         return p
 
     def prob_n(self, i, j):
-        # TODO: calculate denominator once for both probabilities
+        # OPTIMIZE: calculate denominator once for both probabilities
+        # FIXME: probability doesnt sum to 1
         p = sum([self.q_new[m]*self.a[i, j, m] for m in range(len(self.graphs))])/sum([self.q_new[m]*self.a[j, l, m]
                                                                                   for l in range(len(self.node_ids))
                                                                                   for m in range(len(self.graphs))])
@@ -163,17 +166,18 @@ class Muturank:
             self.q_old = copy(self.q_new)
             for i in range(len(self.node_ids)):
                 self.p_new[i]= self.alpha*\
-                               sum([self.p_old[j]*self.o[i, j, d]*self.prob_n(d, j)
+                               sum([self.p_old[j]*self.o[i, j, m]*self.prob_t(m, j)
                                     for j in range(len(self.node_ids))
-                                    for d in range(len(self.graphs))])+(1-self.alpha)*p_star[i]
+                                    for m in range(len(self.graphs))])+(1-self.alpha)*p_star[i]
             for d in range(len(self.graphs)):
                 self.q_new[d] = self.beta*\
                                 sum([self.p_old[j]*self.r[i, j, d]* self.prob_n(i, j)
                                      for i in range(len(self.node_ids))
-                                     for j in range(len(self.node_ids))])+(1-self.beta*q_star[d])
+                                     for j in range(len(self.node_ids))])+(1-self.beta)*q_star[d]
             t += 1
+        for i in range(len(self.node_ids)):
+            print sum([self.prob_n(i, j) for j in range(len(self.node_ids))])
         return
-
 
     def create_dataframes(self, tensor):
         dataframes = {}
