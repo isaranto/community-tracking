@@ -3,18 +3,20 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 from sktensor import sptensor
-from copy import deepcopy
+from copy import deepcopy, copy
 
 
 class Muturank:
-    def __init__(self, graphs, threshold):
+    def __init__(self, graphs, threshold, alpha, beta):
         self.graphs = graphs
         self.node_ids = list(set([node for i in graphs for node in nx.nodes(graphs[i])]))
         # create a dict with {node_id : tensor_position} to be able to retrieve node_id
         self.node_pos = {node_id: i for i, node_id in enumerate(self.node_ids)}
         # self.a, self.o, self.r = self.create_dtensors(graphs)
-        self.a, self.o, self.r = self.create_sptensors()
+        self.a, self.o, self.r, self.sum_row, self.sum_time = self.create_sptensors()
         self.e = threshold
+        self.alpha = alpha
+        self.beta = beta
         # self.tensor= self.create_dense_tensors(graphs)
         # self.frame = self.create_dataframes(self.tensor)
 
@@ -106,11 +108,21 @@ class Muturank:
                         r[t, i, j] = r[t, i, j]/(a[:, i, j].sum())
         return a, o, r
 
-    def prob(self, i, j):
-        pass
+    def prob_t(self, d, j):
+        # TODO: calculate denominator once for both probabilities
+        p = (self.q_new[d]*self.sum_row[j, d])/sum([self.q_new[d]*self.a[j, l, m]
+                                                    for l in range(self.node_ids)
+                                                    for m in range(self.graphs)])
+        return p
 
-    def prob(self, d, j):
-        pass
+    def prob_n(self, i, j):
+        # TODO: calculate denominator once for both probabilities
+        p = sum([self.q_new[m]*self.a[i, j, m] for m in range(self.graphs)])/sum([self.q_new[d]*self.a[j, l, m]
+                                                                                  for l in range(self.node_ids)
+                                                                                  for m in range(self.graphs)])
+        return p
+
+
 
 
     def run_muturank(self):
@@ -140,23 +152,26 @@ class Muturank:
         p_star = np.ones(len(self.node_ids))/len(self.node_ids)
         q_star = np.ones(len(self.graphs))/len(self.graphs)
         """
-        p_new= np.ones((len(p_star)))
-        q_new = np.ones((len(q_star)))
-        p_old = np.zeros((len(p_star)))
-        q_old = np.zeros((len(q_star)))
+        self.p_new= np.ones((len(p_star)))
+        self.q_new = np.ones((len(q_star)))
+        self.p_old = np.zeros((len(p_star)))
+        self.q_old = np.zeros((len(q_star)))
         # while ||p(t)-p(t-1)||^2 + ||q(t) - q(t-1||^2 >=e
-        while np.linalg.norm(p_new-p_old)**2 + np.linalg.norm(q_new-q_old)**2 > self.e:
-            p_old = p_new
-            q_old = q_new
+        while np.linalg.norm(self.p_new-self.p_old)**2 + np.linalg.norm(self.q_new-self.q_old)**2 > self.e:
+            self.p_old = copy(self.p_new)
+            self.q_old = copy(self.q_new)
             for i in range(len(self.node_ids)):
-                # TODO: calculate p_new
-                p_new[i]= 0
+                self.p_new[i]= self.alpha*\
+                               sum([self.p_old[j]*self.o[i, j, d]*self.prob_n(d, j)
+                                    for j in range(self.node_ids)
+                                    for d in range(self.graphs)])+(1-self.alpha)*p_star[i]
             for d in range(len(self.graphs)):
-                # TODO: calculate q_new
-                q_new[d] = 0
+                self.q_new[d] = self.beta*\
+                                sum([self.p_old[j]*self.r[i, j, d]* self.prob_n(i, j)
+                                     for i in range(self.node_ids)
+                                     for j in range(self.node_ids)])+(1-self.beta*q_star[d])
             t += 1
-        return p_new, q_new
-
+        return
 
 
     def create_dataframes(self, tensor):
