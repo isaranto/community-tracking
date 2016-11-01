@@ -17,6 +17,7 @@ class Muturank:
         self.e = threshold
         self.alpha = alpha
         self.beta = beta
+        self.run_muturank()
         # self.tensor= self.create_dense_tensors(graphs)
         # self.frame = self.create_dataframes(self.tensor)
 
@@ -111,15 +112,15 @@ class Muturank:
     def prob_t(self, d, j):
         # TODO: calculate denominator once for both probabilities
         p = (self.q_new[d]*self.sum_row[j, d])/sum([self.q_new[d]*self.a[j, l, m]
-                                                    for l in range(self.node_ids)
-                                                    for m in range(self.graphs)])
+                                                    for l in range(len(self.node_ids))
+                                                    for m in range(len(self.graphs))])
         return p
 
     def prob_n(self, i, j):
         # TODO: calculate denominator once for both probabilities
-        p = sum([self.q_new[m]*self.a[i, j, m] for m in range(self.graphs)])/sum([self.q_new[d]*self.a[j, l, m]
-                                                                                  for l in range(self.node_ids)
-                                                                                  for m in range(self.graphs)])
+        p = sum([self.q_new[m]*self.a[i, j, m] for m in range(len(self.graphs))])/sum([self.q_new[m]*self.a[j, l, m]
+                                                                                  for l in range(len(self.node_ids))
+                                                                                  for m in range(len(self.graphs))])
         return p
 
 
@@ -163,13 +164,13 @@ class Muturank:
             for i in range(len(self.node_ids)):
                 self.p_new[i]= self.alpha*\
                                sum([self.p_old[j]*self.o[i, j, d]*self.prob_n(d, j)
-                                    for j in range(self.node_ids)
-                                    for d in range(self.graphs)])+(1-self.alpha)*p_star[i]
+                                    for j in range(len(self.node_ids))
+                                    for d in range(len(self.graphs))])+(1-self.alpha)*p_star[i]
             for d in range(len(self.graphs)):
                 self.q_new[d] = self.beta*\
                                 sum([self.p_old[j]*self.r[i, j, d]* self.prob_n(i, j)
-                                     for i in range(self.node_ids)
-                                     for j in range(self.node_ids)])+(1-self.beta*q_star[d])
+                                     for i in range(len(self.node_ids))
+                                     for j in range(len(self.node_ids))])+(1-self.beta*q_star[d])
             t += 1
         return
 
@@ -198,7 +199,7 @@ if __name__ == '__main__':
     graphs = {}
     for i, edges in edges.items():
         graphs[i] = nx.Graph(edges)
-    mutu = Muturank(graphs, 1e-6)
+    mutu = Muturank(graphs, 1e-6, 0.85, 0.85)
     #print mutu.a[mutu.node_pos[1],mutu.node_pos[4],1]
     #print mutu.r
 
