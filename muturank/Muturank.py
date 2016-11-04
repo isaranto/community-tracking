@@ -175,9 +175,14 @@ class Muturank:
                                      for i in range(len(self.node_ids))
                                      for j in range(len(self.node_ids))])+(1-self.beta)*q_star[d]
             t += 1
-        for i in range(len(self.node_ids)):
-            print sum([self.prob_n(i, j) for j in range(len(self.node_ids))])
+        """checking the calculation of probabilities
+        for j in range(len(self.node_ids)):
+            print sum([self.prob_n(i, j) for i in range(len(self.node_ids))])
+
+        for j in range(len(self.node_ids)):
+            print sum([self.prob_t(d, j) for d in range(len(self.graphs))])"""
         return
+
 
     def create_dataframes(self, tensor):
         dataframes = {}
