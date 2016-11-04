@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 from sktensor import sptensor
 from copy import deepcopy, copy
+from scipy import sparse
+from sklearn.cluster import spectral_clustering
 
 
 class Muturank:
@@ -18,8 +20,12 @@ class Muturank:
         self.alpha = alpha
         self.beta = beta
         self.run_muturank()
-        print sum(self.p_new)
+        self.create_monorelational()
+        self.clustering()
+        """print sum(self.p_new)
         print sum(self.q_new)
+        print(len(self.p_new))
+        print(len(self.q_new))"""
         # self.tensor= self.create_dense_tensors(graphs)
         # self.frame = self.create_dataframes(self.tensor)
 
@@ -183,6 +189,19 @@ class Muturank:
             print sum([self.prob_t(d, j) for d in range(len(self.graphs))])"""
         return
 
+    def create_monorelational(self):
+        self.w = sparse.eye(len(self.node_ids), dtype=np.float32,format="dok")
+        for i in range(len(self.node_ids)):
+            for j in range((len(self.node_ids))):
+                value = sum([self.q_new[d]*self.a[i, j, d] for d in range(len(self.graphs))])
+                if value:
+                    self.w[i, j] = value
+
+    def clustering(self):
+        clusters = spectral_clustering(self.w, n_clusters=2, n_init=10, eigen_solver='arpack')
+        print clusters
+
+
 
     def create_dataframes(self, tensor):
         dataframes = {}
@@ -196,14 +215,20 @@ class Muturank:
 
 
 if __name__ == '__main__':
-    edges = {
+    """edges = {
         0: [(1, 3), (1, 4), (2, 4)],
         1: [(1, 4), (3, 4), (1, 2)]
     }
-    """ edges = {
+    """
+    edges = {
     0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
     1: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7), (7, 8)],
     2: [(1, 2), (5, 6), (5, 8)]
+    }
+    """edges = {
+        0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
+        1: [(11, 12), (11, 13), (12, 13)],
+        2: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)]
     }"""
     graphs = {}
     for i, edges in edges.items():
