@@ -8,7 +8,6 @@ from scipy import sparse
 from sklearn.cluster import spectral_clustering
 
 
-
 class Muturank:
     def __init__(self, graphs, threshold, alpha, beta):
         self.graphs = graphs
@@ -33,7 +32,7 @@ class Muturank:
     def create_sptensors(self):
         """
             Create a sparse tensor
-            :param graphs:
+            :param :
             :return:
             """
         tuples = []
@@ -62,8 +61,8 @@ class Muturank:
                             o_values.append(a[j, i, t]/sum_rows[j, t])
                             o_values.append(a[i, j, t]/sum_rows[i, t])
         o = sptensor(tuple(triplets.T), vals=o_values, shape=(len(self.node_ids),
-                                                                            len(self.node_ids),
-                                                                          len(graphs)))
+                                                              len(self.node_ids),
+                                                              len(graphs)))
         r_values = []
         sum_time = np.zeros((a.shape[0], a.shape[1]))
         for i in range(a.shape[0]):
@@ -81,8 +80,8 @@ class Muturank:
                         r_values.append(a[j, i, t]/sum_time[j, i])
                         r_values.append(a[i, j, t]/sum_time[i, j])
         r = sptensor(tuple(triplets.T), vals=r_values, shape=(len(self.node_ids),
-                                                                            len(self.node_ids),
-                                                                          len(graphs)))
+                                                              len(self.node_ids),
+                                                              len(graphs)))
         return a, o, r, sum_rows, sum_time
 
     def create_dtensors(self, graphs):
@@ -109,12 +108,12 @@ class Muturank:
         for t in range(0, o.shape[0]):
             for j in range(1, o.shape[2]):
                 for i in range(1, o.shape[1]):
-                    if a[t, 1:, j].sum()!=0:
+                    if a[t, 1:, j].sum() != 0:
                         o[t, i, j] = o[t, i, j]/(a[t, 1:, j].sum())
         for i in range(1, r.shape[1]):
             for j in range(1, r.shape[2]):
                 for t in range(0, r.shape[0]):
-                    if a[:, i, j].sum()!=0:
+                    if a[:, i, j].sum() != 0:
                         r[t, i, j] = r[t, i, j]/(a[:, i, j].sum())
         return a, o, r
 
@@ -171,12 +170,12 @@ class Muturank:
             self.p_old = copy(self.p_new)
             self.q_old = copy(self.q_new)
             for i in range(len(self.node_ids)):
-                self.p_new[i]= self.alpha*\
+                self.p_new[i] = self.alpha *\
                                sum([self.p_old[j]*self.o[i, j, m]*self.prob_t(m, j)
                                     for j in range(len(self.node_ids))
                                     for m in range(len(self.graphs))])+(1-self.alpha)*p_star[i]
             for d in range(len(self.graphs)):
-                self.q_new[d] = self.beta*\
+                self.q_new[d] = self.beta *\
                                 sum([self.p_old[j]*self.r[i, j, d]* self.prob_n(i, j)
                                      for i in range(len(self.node_ids))
                                      for j in range(len(self.node_ids))])+(1-self.beta)*q_star[d]
@@ -201,15 +200,13 @@ class Muturank:
         clusters = spectral_clustering(self.w, n_clusters=2, n_init=10, eigen_solver='arpack')
         print clusters
 
-
-
     def create_dataframes(self, tensor):
         dataframes = {}
         for i in range(tensor.shape[0]):
             pass
         pd.DataFrame(data=tensor[1:, 1:],    # values
-              index=tensor[1:, 0],    # 1st column as index
-            columns=tensor[0, 1:])
+                     index=tensor[1:, 0],    # 1st column as index
+                     columns=tensor[0, 1:])
 
 
 if __name__ == '__main__':
@@ -233,4 +230,3 @@ if __name__ == '__main__':
     mutu = Muturank(graphs, 1e-6, 0.85, 0.85)
     #print mutu.a[mutu.node_pos[1],mutu.node_pos[4],1]
     #print mutu.r
-
