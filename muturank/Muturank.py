@@ -8,6 +8,7 @@ from scipy import sparse
 from sklearn.cluster import spectral_clustering
 
 
+
 class Muturank:
     def __init__(self, graphs, threshold, alpha, beta):
         self.graphs = graphs
@@ -126,7 +127,6 @@ class Muturank:
 
     def prob_n(self, i, j):
         # OPTIMIZE: calculate denominator once for both probabilities
-        # FIXME: probability doesnt sum to 1
         p = sum([self.q_new[m]*self.a[i, j, m] for m in range(len(self.graphs))])/sum([self.q_new[m]*self.a[j, l, m]
                                                                                   for l in range(len(self.node_ids))
                                                                                   for m in range(len(self.graphs))])
@@ -212,10 +212,8 @@ class Muturank:
             columns=tensor[0, 1:])
 
 
-
-
 if __name__ == '__main__':
-    """edges = {
+    edges = {
         0: [(1, 3), (1, 4), (2, 4)],
         1: [(1, 4), (3, 4), (1, 2)]
     }
@@ -224,8 +222,7 @@ if __name__ == '__main__':
     0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
     1: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7), (7, 8)],
     2: [(1, 2), (5, 6), (5, 8)]
-    }
-    """edges = {
+    }edges = {
         0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
         1: [(11, 12), (11, 13), (12, 13)],
         2: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)]

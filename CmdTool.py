@@ -87,7 +87,7 @@ class CmdTool(cmd.Cmd):
         print "DBLP data have been successfully loaded!"
         return
 
-    def do_nntfact(self, seeds, thres=1e-4):
+    def do_nntfact(self, seeds, random_init, thres=1e-4):
         """
 
         :param e:
@@ -96,7 +96,7 @@ class CmdTool(cmd.Cmd):
         # num_of_coms = len(set([c for _,comms in self.comms.iteritems() for c in comms ]))
         # set number of factors to the max number of communities in all timeframes
         num_of_coms = max([len(comms) for tf, comms in self.comms.iteritems()])
-        TensorFact(self.graphs, num_of_coms, float(thres), int(seeds))
+        TensorFact(self.graphs, num_of_coms, float(thres), int(seeds), random_init=random_init)
         return
 
     def do_create_muturank_tensor(self, connections):

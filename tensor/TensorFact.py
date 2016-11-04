@@ -4,14 +4,18 @@ import numpy as np
 from sktensor import sptensor, dtensor, ktensor, cp_als
 import ncp
 from copy import deepcopy
-import math
+from scipy import sparse
+from sklearn.cluster import spectral_clustering
 import pprint
 
+
 class TensorFact:
-    def __init__(self, graphs, num_of_coms, threshold, seeds=20):
+    def __init__(self, graphs, num_of_coms, threshold, random_init=False, seeds=20):
         self.thres = threshold
         self.graphs = graphs
         self.add_self_edges()
+        self.num_of_coms = num_of_coms
+        self.random_init = random_init
         self.node_ids = list(set([node for i in graphs for node in nx.nodes(graphs[i])]))
         # create a dict with {node_id : tensor_position} to be able to retrieve node_id
         self.node_pos = {node_id: i for i, node_id in enumerate(self.node_ids)}
@@ -21,12 +25,12 @@ class TensorFact:
         C_org = np.random.rand(len(graphs), num_of_coms)
         self.tensor = ktensor([A_org, B_org, C_org]).totensor()"""
         # self.tensor = self.create_dtensor(graphs)
-        A, B, C = self.nnfact_repeat(num_of_coms, seeds)
+        A, B, C = self.nnfact_repeat(seeds)
         self.comms = self.get_comms(A, B, C)
         self. timeline = self.get_timeline(C)
         print "communities: ",
         pprint.pprint(self.comms, indent=2, width=80)
-        print "communities in timeframes: ",
+        print "communities in timeframes: com:[tfi,tfj...]  ",
         pprint.pprint(self.timeline, indent=2, width=80)
         self.get_fact_info(A)
 
@@ -83,36 +87,37 @@ class TensorFact:
                                                                             len(graphs)))
         return T
 
-    def nnfact_repeat(self,num_of_coms, num_of_seeds):
+    def nnfact_repeat(self, num_of_seeds):
         seed_list = np.random.randint(0, 4294967295, num_of_seeds)
         min_error = 1
         for seed in seed_list:
-            A, B, C, error = self.tensor_decomp(num_of_coms, seed)
+            A, B, C, error = self.tensor_decomp(seed)
             if error <= min_error:
                 best_seed = seed
                 min_error= error
-        A, B, C, error = self.tensor_decomp(num_of_coms, best_seed)
+        A, B, C, error = self.tensor_decomp(best_seed)
         print "Error = ", error, " seed: ",best_seed
         print "A = \n", A,"\n B = \n", B,"\n C = \n", C
         return A, B, C
 
-    def tensor_decomp(self, num_of_coms, seed):
+    def tensor_decomp(self, seed):
         # setting seed in order to reproduce experiment
         np.random.seed(seed)
-        A_init = np.random.rand(self.tensor.shape[0], num_of_coms)
-        B_init =deepcopy(A_init)
-        C_init = np.random.rand(self.tensor.shape[2], num_of_coms)
-        Finit = [A_init, B_init, C_init]
+        if self.random_init:
+            A_init = np.random.rand(self.tensor.shape[0], self.num_of_coms)
+            B_init =deepcopy(A_init)
+            C_init = np.random.rand(self.tensor.shape[2], self.num_of_coms)
+            Finit = [A_init, B_init, C_init]
+        else:
+            Finit = self.get_Finit()
         #Finit = [np.random.rand(X.shape[i], r) for i in range(nWay)]
-        X_approx_ks = ncp.nonnegative_tensor_factorization(self.tensor, num_of_coms, method='anls_bpp',
+        X_approx_ks = ncp.nonnegative_tensor_factorization(self.tensor, self.num_of_coms, method='anls_bpp',
                                                            stop_criterion=2, init=Finit)
         A = X_approx_ks.U[0]
         B = X_approx_ks.U[1]
         C = X_approx_ks.U[2]
-        error =(self.tensor - X_approx_ks.totensor()).norm() / self.tensor.norm()
+        error = (self.tensor - X_approx_ks.totensor()).norm() / self.tensor.norm()
         return A, B, C, error
-
-
 
     def get_comms(self, A, B, C):
         """
@@ -144,6 +149,30 @@ class TensorFact:
                         timeline[t+1] = [c+1]
         return timeline
 
+    def aggregated_network_matrix(self):
+        agg = sparse.eye(len(self.node_ids), dtype=np.float32,format="dok")
+        for i in range(len(self.node_ids)):
+            for j in range(i):
+                if sum([self.tensor[i, j, t] for t in range(len(self.graphs))]):
+                    agg[i, j] = 1
+        return agg
+
+    def get_Finit(self):
+        agg_network = self.aggregated_network_matrix()
+        #A_init = sparse.dok_matrix((len(self.node_ids),len(self.node_ids)), dtype=np.float32)
+        A_init = np.zeros((len(self.node_ids), self.num_of_coms))
+        clusters = spectral_clustering(agg_network, n_clusters=self.num_of_coms, n_init=10, eigen_solver='arpack')
+        for i, t in enumerate(clusters):
+            A_init[i, t] = 1
+        B_init =deepcopy(A_init)
+        C_init = np.random.rand(self.tensor.shape[2], self.num_of_coms)
+        Finit = [A_init, B_init, C_init]
+        return Finit
+
+
+
+
+
 
 
 if __name__ == '__main__':
@@ -160,4 +189,4 @@ if __name__ == '__main__':
     graphs = {}
     for i, edges in edges.items():
         graphs[i+1] = nx.Graph(edges)
-    fact = TensorFact(graphs, num_of_coms=3, seeds=1, threshold=1e-4)
+    fact = TensorFact(graphs, num_of_coms=3, seeds=1, threshold=1e-4, random_init=False)
