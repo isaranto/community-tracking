@@ -198,7 +198,8 @@ class Muturank:
 
     def clustering(self):
         clusters = spectral_clustering(self.w, n_clusters=2, n_init=10, eigen_solver='arpack')
-        print clusters
+        for node, com in enumerate(clusters):
+            print self.node_ids[node], com
 
     def create_dataframes(self, tensor):
         dataframes = {}
@@ -210,7 +211,7 @@ class Muturank:
 
 
 if __name__ == '__main__':
-    edges = {
+    """edges = {
         0: [(1, 3), (1, 4), (2, 4)],
         1: [(1, 4), (3, 4), (1, 2)]
     }
@@ -219,7 +220,9 @@ if __name__ == '__main__':
     0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
     1: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7), (7, 8)],
     2: [(1, 2), (5, 6), (5, 8)]
-    }edges = {
+    }
+    """
+    edges = {
         0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
         1: [(11, 12), (11, 13), (12, 13)],
         2: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)]
