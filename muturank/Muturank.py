@@ -12,6 +12,8 @@ class Muturank:
     def __init__(self, graphs, threshold, alpha, beta):
         self.graphs = graphs
         self.node_ids = list(set([node for i in graphs for node in nx.nodes(graphs[i])]))
+        self.num_of_nodes = len(self.node_ids)
+        self.tfs = len(self.graphs)
         # create a dict with {node_id : tensor_position} to be able to retrieve node_id
         self.node_pos = {node_id: i for i, node_id in enumerate(self.node_ids)}
         # self.a, self.o, self.r = self.create_dtensors(graphs)
@@ -20,7 +22,8 @@ class Muturank:
         self.alpha = alpha
         self.beta = beta
         self.run_muturank()
-        self.create_monorelational()
+        self.w = self.create_monorelational()
+        self.w =self.add_time_edges(True)
         self.clustering()
         """print sum(self.p_new)
         print sum(self.q_new)
@@ -188,16 +191,59 @@ class Muturank:
         return
 
     def create_monorelational(self):
-        self.w = sparse.eye(len(self.node_ids), dtype=np.float32,format="dok")
+        w = sparse.eye(len(self.node_ids), dtype=np.float32,format="dok")
         for i in range(len(self.node_ids)):
             for j in range((len(self.node_ids))):
                 value = sum([self.q_new[d]*self.a[i, j, d] for d in range(len(self.graphs))])
                 if value:
-                    self.w[i, j] = value
+                    w[i, j] = value
+        return w
+
+    def add_time_edges(self, connect_all = False):
+        """
+        Connect the same node with itself across timeframes
+        :param connect_all: if set to true, all time-varying instances of a node will be connected
+        :return:
+        """
+        # FIXME : Time edges should be added before the run of Muturank
+        #time_matrix = np.zeros((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs))
+        time_matrix = sparse.eye(self.num_of_nodes*self.tfs, dtype=np.float32,format="dok")
+        for n in range(self.tfs):
+            time_matrix[self.num_of_nodes*n:self.num_of_nodes*n+self.num_of_nodes,
+            self.num_of_nodes*n:self.num_of_nodes*n+self.num_of_nodes] = self.w
+        if connect_all:
+            for t in range(1, self.tfs):
+                for i in range(self.num_of_nodes):
+                    time_matrix[i, i+self.num_of_nodes*t] = 1
+                    time_matrix[i+self.num_of_nodes*t, i] = 1
+                    if t > 1:
+                        for m in range(1, t):
+                            time_matrix[i+self.num_of_nodes*m, i+self.num_of_nodes*t] = 1
+                            time_matrix[i+self.num_of_nodes*t, i+self.num_of_nodes*m] = 1
+        else:
+            # TODO:connect only with previous and next
+            pass
+
+        np.set_printoptions(precision=3,linewidth=200)
+        return time_matrix
+
+
 
     def clustering(self):
-        clusters = spectral_clustering(self.w, n_clusters=2, n_init=10, eigen_solver='arpack')
+        clusters = spectral_clustering(self.w, n_clusters=3, n_init=10, eigen_solver='arpack')
+        com_time = {}
+        for t in range(self.tfs):
+            comms = {}
+            for node in range(self.num_of_nodes):
+                try:
+                    comms[clusters[node + t*self.num_of_nodes]].append(self.node_ids[node])
+                except KeyError:
+                    comms[clusters[node + t*self.num_of_nodes]]= [self.node_ids[node]]
+                #print self.node_ids[node], clusters[node + t*self.num_of_nodes]
+            com_time[t] = comms
         print clusters
+        import pprint
+        pprint.pprint(com_time)
 
     def create_dataframes(self, tensor):
         dataframes = {}
@@ -209,20 +255,20 @@ class Muturank:
 
 
 if __name__ == '__main__':
-    edges = {
+    """edges = {
         0: [(1, 3), (1, 4), (2, 4)],
         1: [(1, 4), (3, 4), (1, 2)]
     }
-    """
     edges = {
     0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
     1: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7), (7, 8)],
     2: [(1, 2), (5, 6), (5, 8)]
-    }edges = {
+    }"""
+    edges = {
         0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
         1: [(11, 12), (11, 13), (12, 13)],
         2: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)]
-    }"""
+    }
     graphs = {}
     for i, edges in edges.items():
         graphs[i] = nx.Graph(edges)
