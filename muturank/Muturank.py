@@ -36,8 +36,7 @@ class Muturank:
             :return:
             """
         tuples = []
-        # triplets = np.array([(u, v, t) for t in range(1, len(graphs)+1) for u, v in graphs[i].edges_iter()] +
-        # [(v, u, t) for t in range(1, len(graphs)+1) for u, v in graphs[i].edges_iter()])
+        # TODO: add edges between timeframes
         for i, (t, graph) in enumerate(graphs.iteritems()):
             for u, v in graph.edges_iter():
                 tuples.append([self.node_pos[u], self.node_pos[v], i])
