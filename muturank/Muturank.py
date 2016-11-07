@@ -10,7 +10,8 @@ from sklearn.cluster import spectral_clustering
 
 class Muturank:
     def __init__(self, graphs, threshold, alpha, beta):
-        self.graphs = graphs
+        self.graphs = self.add_self_edges(graphs)
+        #self.graphs = graphs
         self.node_ids = list(set([node for i in graphs for node in nx.nodes(graphs[i])]))
         self.num_of_nodes = len(self.node_ids)
         self.tfs = len(self.graphs)
@@ -23,7 +24,7 @@ class Muturank:
         self.beta = beta
         self.run_muturank()
         self.w = self.create_monorelational()
-        self.w =self.add_time_edges(True)
+        self.w = self.add_time_edges(True)
         self.clustering()
         """print sum(self.p_new)
         print sum(self.q_new)
@@ -31,6 +32,11 @@ class Muturank:
         print(len(self.q_new))"""
         # self.tensor= self.create_dense_tensors(graphs)
         # self.frame = self.create_dataframes(self.tensor)
+
+    def add_self_edges(self, graphs):
+        """for _, graph in graphs.iteritems():
+            graph.add_edges_from([(i, i) for i in graph.nodes()])"""
+        return graphs
 
     def create_sptensors(self):
         """
@@ -44,7 +50,7 @@ class Muturank:
             for u, v in graph.edges_iter():
                 tuples.append([self.node_pos[u], self.node_pos[v], i])
                 tuples.append([self.node_pos[v], self.node_pos[u], i])
-        triplets = np.array([(u, v, t) for u, v, t in tuples])
+        triplets = np.array(list(set([(u, v, t) for u, v, t in tuples])))
         a = sptensor(tuple(triplets.T), vals=np.ones(len(triplets)), shape=(len(self.node_ids),
                                                                             len(self.node_ids),
                                                                             len(graphs)))
@@ -61,7 +67,9 @@ class Muturank:
                     for j in range(i):
                         if a[i, j, t] != 0:
                             o_values.append(a[j, i, t]/sum_rows[j, t])
-                            o_values.append(a[i, j, t]/sum_rows[i, t])
+                            if i!=j:
+                                o_values.append(a[i, j, t]/sum_rows[i, t])
+
         o = sptensor(tuple(triplets.T), vals=o_values, shape=(len(self.node_ids),
                                                               len(self.node_ids),
                                                               len(graphs)))
@@ -199,7 +207,7 @@ class Muturank:
                     w[i, j] = value
         return w
 
-    def add_time_edges(self, connect_all = False):
+    def add_time_edges(self, connect_all=False):
         """
         Connect the same node with itself across timeframes
         :param connect_all: if set to true, all time-varying instances of a node will be connected
@@ -230,7 +238,7 @@ class Muturank:
 
 
     def clustering(self):
-        clusters = spectral_clustering(self.w, n_clusters=3, n_init=10, eigen_solver='arpack')
+        clusters = spectral_clustering(self.w, n_clusters=2, n_init=10, eigen_solver='arpack')
         com_time = {}
         for t in range(self.tfs):
             comms = {}
@@ -255,20 +263,21 @@ class Muturank:
 
 
 if __name__ == '__main__':
-    """edges = {
+    edges = {
         0: [(1, 3), (1, 4), (2, 4)],
         1: [(1, 4), (3, 4), (1, 2)]
     }
+    """
     edges = {
     0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
     1: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7), (7, 8)],
     2: [(1, 2), (5, 6), (5, 8)]
-    }"""
+    }
     edges = {
         0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
         1: [(11, 12), (11, 13), (12, 13)],
         2: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)]
-    }
+    }"""
     graphs = {}
     for i, edges in edges.items():
         graphs[i] = nx.Graph(edges)
