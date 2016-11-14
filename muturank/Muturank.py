@@ -232,7 +232,7 @@ class Muturank:
             # TODO:connect only with previous and next
             pass
 
-        np.set_printoptions(precision=3,linewidth=200)
+        np.set_printoptions(precision=3, linewidth=200)
         return time_matrix
 
 
