@@ -38,11 +38,10 @@ class Muturank2:
             :return:
             """
         tuples = []
-        # TODO: add edges between timeframes
         a = {}
         for i, (t, graph) in enumerate(self.graphs.iteritems()):
-            a[i] = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float32)
-            #a[i] = sparse.eye(self.num_of_nodes*self.tfs, dtype=np.float32,format="dok")
+            #a[i] = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float32)
+            a[i] = sparse.eye(self.num_of_nodes*self.tfs, dtype=np.float32,format="dok")
             for u, v in graph.edges_iter():
                 # add self edges for nodes that exist
                 a[i][i*self.num_of_nodes + self.node_pos[u], i*self.num_of_nodes + self.node_pos[u]] = 1
@@ -51,60 +50,60 @@ class Muturank2:
                 a[i][i*self.num_of_nodes + self.node_pos[u], i*self.num_of_nodes + self.node_pos[v]] = 1
                 a[i][i*self.num_of_nodes + self.node_pos[v], i*self.num_of_nodes + self.node_pos[u]] = 1
         # add time edges
-        #print a[0].toarray()
         a = self.add_time_edges(a, 'one')
+        print a[1].toarray()
         o = deepcopy(a)
         r = deepcopy(a)
-        """o_values = []
-        sum_rows = np.zeros((a.shape[0], a.shape[2]))
-        for t in range(a.shape[2]):
-            for i in range(a.shape[0]):
-                for j in range(a.shape[1]):
-                    # TODO : just add another for loop instead of : to access .sum()
-                    # TODO : check sparse tensor performance and library
-                    sum_rows[i, t] += a[i, j, t]
-            for i in range(a.shape[0]):
-                if sum_rows[i, t] != 0:
-                    for j in range(i):
-                        if a[i, j, t] != 0:
-                            o_values.append(a[j, i, t]/sum_rows[j, t])
-                            if i!=j:
-                                o_values.append(a[i, j, t]/sum_rows[i, t])
-
-        o = sptensor(tuple(triplets.T), vals=o_values, shape=(len(self.node_ids),
-                                                              len(self.node_ids),
-                                                              len(graphs)))
-        r_values = []
-        sum_time = np.zeros((a.shape[0], a.shape[1]))
-        for i in range(a.shape[0]):
-            # OPTIMIZE: sum is a dense matrix/array. Should be sparse for memory
-            for j in range(a.shape[1]):
-                for t in range(a.shape[2]):
-                    # TODO : just add another for loop instead of : to access .sum()
-                    # TODO : check sparse tensor performance and library
-                    if a[i, j, t] != 0:
-                        sum_time[i, j] += a[i, j, t]
-        for t in range(a.shape[2]):
-            for i in range(a.shape[0]):
-                for j in range(i):
-                    if a[j, i, t] != 0:
-                        r_values.append(a[j, i, t]/sum_time[j, i])
-                        r_values.append(a[i, j, t]/sum_time[i, j])
-        r = sptensor(tuple(triplets.T), vals=r_values, shape=(len(self.node_ids),
-                                                              len(self.node_ids),
-                                                              len(graphs)))
-        return a, o, r, sum_rows, sum_time"""
+        sum_rows = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.tfs), dtype=np.float32)
+        for t in range(self.tfs):
+            for i in range(self.num_of_nodes*self.tfs):
+                #sum_rows[i, t] = a[t].sum(1)[i]
+                pass
+        for t in range(self.tfs):
+            for i in range(self.num_of_nodes*self.tfs):
+                sum_rows[i, t] = a[t].sum(1)[i]
+                for j in range(i+1):
+                    if a[t][i, j] != 0:
+                        try:
+                            # o[t][j,i] = a[t][j, i]/np.sum(a[t][j, :])
+                            o[t][j, i] = a[t][j, i]/sum_rows[j, t]
+                            if i != j:
+                                # o[t][i, j] = a[t][i, j]/np.sum(a[t][i, :])
+                                o[t][i, j] = a[t][i, j]/sum_rows[i, t]
+                        except ZeroDivisionError:
+                            pass
+        print o[1].toarray()
+        sum_time = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float32)
+        for i in range(self.num_of_nodes*self.tfs):
+            for j in range(self.num_of_nodes*self.tfs):
+                for t in range(self.tfs):
+                    if a[t][i, j] != 0:
+                        sum_time[i, j] += a[t][i, j]
+        for t in range(self.tfs):
+            for i in range(self.num_of_nodes*self.tfs):
+                for j in range(i+1):
+                    if a[t][j, i] != 0:
+                        r[t][j, i] = a[t][j, i]/sum_time[j, i]
+                        r[t][i, j] = a[t][i, j]/sum_time[i, j]
+        return a, o, r, sum_rows, sum_time
 
     def add_time_edges(self, a, connection):
         if connection == 'one':
             # connect only with previous and next timeframe
             for t in range(self.tfs):
-                for i in range(self.num_of_nodes):
+                for i in range(a[t].shape[0]):
                     try:
-                        a[t][i + self.num_of_nodes*t, i + self.num_of_nodes*(t+1)] = 1
-                        a[t][i + self.num_of_nodes*t, i + self.num_of_nodes*(t-1)] = 1
-                        a[t][i + self.num_of_nodes*(t+1), i + self.num_of_nodes*t] = 1
-                        a[t][i + self.num_of_nodes*(t-1), i + self.num_of_nodes*t] = 1
+                        if i < self.num_of_nodes:
+                            a[t][i, i + self.num_of_nodes] = 1
+                            a[t][i + self.num_of_nodes, i] = 1
+                        elif i > self.num_of_nodes*(self.tfs-1):
+                            a[t][i, i - self.num_of_nodes] = 1
+                            a[t][i - self.num_of_nodes, i] = 1
+                        else:
+                            a[t][i, i + self.num_of_nodes] = 1
+                            a[t][i + self.num_of_nodes, i] = 1
+                            a[t][i, i - self.num_of_nodes] = 1
+                            a[t][i - self.num_of_nodes, i] = 1
                     except IndexError:
                         pass
         if connection == 'all':
