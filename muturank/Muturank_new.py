@@ -38,7 +38,7 @@ class Muturank_new:
         print(len(self.q_new))"""
         # self.tensor= self.create_dense_tensors(graphs)
         # self.frame = self.create_dataframes(self.tensor)
-        self.check_probs()
+        #self.check_probs()
 
     def create_sptensors(self):
         """
@@ -132,14 +132,14 @@ class Muturank_new:
 
     def prob_t(self, d, j):
         # OPTIMIZE: calculate denominator once for both probabilities
-        p = (self.q_new[d]*self.sum_row[j, d])/sum([self.q_new[d]*self.a[m][j, l]
+        p = (self.q_old[d]*self.sum_row[j, d])/sum([self.q_old[d]*self.a[m][j, l]
                                                     for l in range(self.num_of_nodes*self.tfs)
                                                     for m in range(self.tfs)])
         return p
 
     def prob_n(self, i, j):
         # OPTIMIZE: calculate denominator once for both probabilities
-        p = sum([self.q_new[m]*self.a[m][i, j] for m in range(self.tfs)])/sum([self.q_new[m]*self.a[m][j, l]
+        p = sum([self.q_old[m]*self.a[m][j, i] for m in range(self.tfs)])/sum([self.q_old[m]*self.a[m][j, l]
                                                                 for l in range(self.num_of_nodes*self.tfs)
                                                                 for m in range(self.tfs)])
         return p
@@ -164,8 +164,8 @@ class Muturank_new:
         # TODO: p* and q* should be 1/N and 1/m (the same goes for p0 and q0
         # p_star = np.random.dirichlet(np.ones(len(self.node_ids)))
         # q_star = np.random.dirichlet(np.ones(len(self.graphs)))
-        #p_star = [1/(self.num_of_nodes*self.tfs) for _ in range(self.num_of_nodes*self.tfs)]
-        #q_star = [1/self.tfs for _ in range(self.tfs)]
+        # p_star = [1/(self.num_of_nodes*self.tfs) for _ in range(self.num_of_nodes*self.tfs)]
+        # q_star = [1/self.tfs for _ in range(self.tfs)]
         p_star = np.repeat(1/(self.num_of_nodes*self.tfs), self.num_of_nodes*self.tfs)
         q_star = np.repeat(1/self.tfs, self.tfs)
         self.p_new = np.repeat(1/(self.num_of_nodes*self.tfs), self.num_of_nodes*self.tfs)
@@ -189,6 +189,7 @@ class Muturank_new:
                                      for i in range(self.num_of_nodes*self.tfs)
                                      for j in range(self.num_of_nodes*self.tfs)])+(1-self.beta)*q_star[d]
             t += 1
+            self.check_probs()
         """checking the calculation of probabilities
         for j in range(len(self.node_ids)):
             print sum([self.prob_n(i, j) for i in range(len(self.node_ids))])

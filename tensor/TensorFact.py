@@ -114,7 +114,7 @@ class TensorFact:
             C_init = np.random.rand(self.tensor.shape[2], self.num_of_coms)
             Finit = [A_init, B_init, C_init]
         else:
-            Finit = self.get_Finit()
+            Finit = self.get_Finit(seed)
 
         #Finit = [np.random.rand(X.shape[i], r) for i in range(nWay)]
         X_approx_ks = ncp.nonnegative_tensor_factorization(self.tensor, self.num_of_coms, method='anls_bpp',
@@ -163,11 +163,12 @@ class TensorFact:
                     agg[i, j] = 1
         return agg
 
-    def get_Finit(self):
+    def get_Finit(self, seed):
         agg_network = self.aggregated_network_matrix()
         # A_init = sparse.dok_matrix((len(self.node_ids),len(self.node_ids)), dtype=np.float32)
         A_init = np.zeros((len(self.node_ids), self.num_of_coms))
-        clusters = spectral_clustering(agg_network, n_clusters=self.num_of_coms, n_init=10, eigen_solver='arpack')
+        clusters = spectral_clustering(agg_network, n_clusters=self.num_of_coms, n_init=10, eigen_solver='arpack',
+                                       random_state=seed)
         for i, t in enumerate(clusters):
             A_init[i, t] = 1
         B_init = deepcopy(A_init)
