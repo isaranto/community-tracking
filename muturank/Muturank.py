@@ -24,7 +24,7 @@ class Muturank:
         self.beta = beta
         self.run_muturank()
         self.w = self.create_monorelational()
-        self.w = self.add_time_edges(True)
+        #self.w = self.add_time_edges(True)
         self.clustering()
         """print sum(self.p_new)
         print sum(self.q_new)
@@ -129,14 +129,15 @@ class Muturank:
 
     def prob_t(self, d, j):
         # OPTIMIZE: calculate denominator once for both probabilities
-        p = (self.q_new[d]*self.sum_row[j, d])/sum([self.q_new[d]*self.a[j, l, m]
+        p = (self.q_old[d]*self.sum_row[j, d])/np.sum([self.q_old[m]*self.a[j, l, m]
                                                     for l in range(len(self.node_ids))
                                                     for m in range(len(self.graphs))])
         return p
 
     def prob_n(self, i, j):
         # OPTIMIZE: calculate denominator once for both probabilities
-        p = sum([self.q_new[m]*self.a[i, j, m] for m in range(len(self.graphs))])/sum([self.q_new[m]*self.a[j, l, m]
+        p = np.sum([self.q_old[m]*self.a[i, j, m] for m in range(len(self.graphs))])/np.sum([self.q_old[m]*self.a[j,
+                                                                                                                 l, m]
                                                                                   for l in range(len(self.node_ids))
                                                                                   for m in range(len(self.graphs))])
         return p
@@ -164,15 +165,15 @@ class Muturank:
         # TODO: p* and q* should be 1/N and 1/m (the same goes for p0 and q0
         #p_star = np.random.dirichlet(np.ones(len(self.node_ids)))
         #q_star = np.random.dirichlet(np.ones(len(self.graphs)))
-        p_star = [1/len(self.node_ids) for node in self.node_ids]
-        q_star = [1/len(self.graphs) for tf in self.graphs]
+        p_star = [1/len(self.node_ids) for _ in self.node_ids]
+        q_star = [1/len(self.graphs) for _ in self.graphs]
         """
         alternatively we set q_star and q_star equal to 1/n
         p_star = np.ones(len(self.node_ids))/len(self.node_ids)
         q_star = np.ones(len(self.graphs))/len(self.graphs)
         """
-        self.p_new= np.ones((len(p_star)))
-        self.q_new = np.ones((len(q_star)))
+        self.p_new= np.repeat(1/self.num_of_nodes, self.num_of_nodes)
+        self.q_new = np.repeat(1/self.tfs, self.tfs)
         self.p_old = np.zeros((len(p_star)))
         self.q_old = np.zeros((len(q_star)))
         # while ||p(t)-p(t-1)||^2 + ||q(t) - q(t-1||^2 >=e
@@ -181,15 +182,16 @@ class Muturank:
             self.q_old = copy(self.q_new)
             for i in range(len(self.node_ids)):
                 self.p_new[i] = self.alpha *\
-                               sum([self.p_old[j]*self.o[i, j, m]*self.prob_t(m, j)
+                               np.sum([self.p_old[j]*self.o[i, j, m]*self.prob_t(m, j)
                                     for j in range(len(self.node_ids))
                                     for m in range(len(self.graphs))])+(1-self.alpha)*p_star[i]
             for d in range(len(self.graphs)):
                 self.q_new[d] = self.beta *\
-                                sum([self.p_old[j]*self.r[i, j, d]* self.prob_n(i, j)
+                                np.sum([self.p_old[j]*self.r[i, j, d]* self.prob_n(i, j)
                                      for i in range(len(self.node_ids))
                                      for j in range(len(self.node_ids))])+(1-self.beta)*q_star[d]
             t += 1
+            self.check_probs()
         """checking the calculation of probabilities
         for j in range(len(self.node_ids)):
             print sum([self.prob_n(i, j) for i in range(len(self.node_ids))])
@@ -256,13 +258,29 @@ class Muturank:
         import pprint
         pprint.pprint(com_time)"""
 
-    def create_dataframes(self, tensor):
-        dataframes = {}
-        for i in range(tensor.shape[0]):
-            pass
-        pd.DataFrame(data=tensor[1:, 1:],    # values
-                     index=tensor[1:, 0],    # 1st column as index
-                     columns=tensor[0, 1:])
+    def check_probs(self):
+        if np.sum(self.p_new)!=1.0:
+            print "p_new ", np.sum(self.p_new) , self.p_new
+        if np.sum(self.q_new)!=1.0:
+            print "q_new ", np.sum(self.q_new), self.q_new
+        denom = np.zeros(self.num_of_nodes)
+        for i in range(self.num_of_nodes):
+            denom[i] = np.sum([self.q_old[m]*self.a[i,l,m]
+                           for l in range(self.num_of_nodes)
+                           for m in range(self.tfs)])
+        for j in range(self.num_of_nodes):
+            sum = 0
+            for d in range(self.tfs):
+                sum += self.prob_t(d, j)
+            if sum != 1.0:
+                print "prob_t is", sum, " for j=", j
+        for j in range(self.num_of_nodes):
+            sum=0
+            for i in range(self.num_of_nodes):
+                sum += self.prob_n(i, j)
+            if sum != 1.0:
+                print "prob_n is", sum, " for i=", i
+
 
 
 if __name__ == '__main__':

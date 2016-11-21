@@ -130,18 +130,16 @@ class Muturank_new:
 
         return a
 
-    def prob_t(self, d, j):
+    def prob_t(self, d, j, denom):
         # OPTIMIZE: calculate denominator once for both probabilities
-        p = (self.q_old[d]*self.sum_row[j, d])/sum([self.q_old[d]*self.a[m][j, l]
-                                                    for l in range(self.num_of_nodes*self.tfs)
-                                                    for m in range(self.tfs)])
+        p = (self.q_old[d]*self.sum_row[j, d])/denom
+        # np.sum([self.q_old[m]*self.a[m][j, l] for l in range(self.num_of_nodes*self.tfs) for m in range(self.tfs)])
         return p
 
-    def prob_n(self, i, j):
+    def prob_n(self, i, j, denom):
         # OPTIMIZE: calculate denominator once for both probabilities
-        p = sum([self.q_old[m]*self.a[m][j, i] for m in range(self.tfs)])/sum([self.q_old[m]*self.a[m][j, l]
-                                                                for l in range(self.num_of_nodes*self.tfs)
-                                                                for m in range(self.tfs)])
+        p = np.sum([self.q_old[m]*self.a[m][j, i] for m in range(self.tfs)])/denom
+        # np.sum([self.q_old[m]*self.a[m][j, l] for l in range(self.num_of_nodes*self.tfs) for m in range(self.tfs)])
         return p
 
     def run_muturank(self):
@@ -178,14 +176,20 @@ class Muturank_new:
             start = False
             self.p_old = copy(self.p_new)
             self.q_old = copy(self.q_new)
+            # calculate prob denominators once
+            denom = np.zeros(self.num_of_nodes*self.tfs)
+            for i in range(self.num_of_nodes*self.tfs):
+                denom[i] = sum([self.q_old[m]*self.a[m][i, l]
+                               for l in range(self.num_of_nodes*self.tfs)
+                               for m in range(self.tfs)])
             for i in range(self.num_of_nodes*self.tfs):
                 self.p_new[i] = self.alpha *\
-                               sum([self.p_old[j]*self.o[d][i, j]*self.prob_t(d, j)
+                               sum([self.p_old[j]*self.o[d][i, j]*self.prob_t(d, j, denom[j])
                                     for j in range(self.num_of_nodes*self.tfs)
                                     for d in range(self.tfs)])+(1-self.alpha)*p_star[i]
             for d in range(self.tfs):
                 self.q_new[d] = self.beta *\
-                                sum([self.p_old[j]*self.r[d][i, j]* self.prob_n(i, j)
+                                sum([self.p_old[j]*self.r[d][i, j]* self.prob_n(i, j, denom[j])
                                      for i in range(self.num_of_nodes*self.tfs)
                                      for j in range(self.num_of_nodes*self.tfs)])+(1-self.beta)*q_star[d]
             t += 1
@@ -233,37 +237,42 @@ class Muturank_new:
         pprint.pprint(comms)
 
     def check_probs(self):
-        if np.sum(self.p_new)!=1:
+        if np.sum(self.p_new)!=1.0:
             print "p_new ", np.sum(self.p_new) , self.p_new
-        if np.sum(self.q_new)!=1:
+        if np.sum(self.q_new)!=1.0:
             print "q_new ", np.sum(self.q_new), self.q_new
+        denom = np.zeros(self.num_of_nodes*self.tfs)
+        for i in range(self.num_of_nodes*self.tfs):
+            denom[i] = np.sum([self.q_old[m]*self.a[m][i, l]
+                           for l in range(self.num_of_nodes*self.tfs)
+                           for m in range(self.tfs)])
         for j in range(self.num_of_nodes*self.tfs):
             sum = 0
             for d in range(self.tfs):
-                sum += self.prob_t(d, j)
-            if sum != 1:
+                sum += self.prob_t(d, j, denom[j])
+            if sum != 1.0:
                 print "prob_t is", sum, " for j=", j
         for j in range(self.num_of_nodes*self.tfs):
             sum=0
             for i in range(self.num_of_nodes*self.tfs):
-                sum += self.prob_n(i, j)
-            if sum != 1:
+                sum += self.prob_n(i, j, denom[j])
+            if sum != 1.0:
                 print "prob_n is", sum, " for i=", i
 
 
 if __name__ == '__main__':
-    edges = {
+    """edges = {
         0: [(1, 3), (1, 4), (2, 4)],
         1: [(1, 4), (3, 4), (1, 2)],
         2: [(1, 4), (3, 4), (1, 2)]
-    }
-    """
+    }"""
+
     edges = {
     0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
     1: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7), (7, 8)],
     2: [(1, 2), (5, 6), (5, 8)]
     }
-
+    """
     edges = {
         0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
         1: [(11, 12), (11, 13), (12, 13)],
