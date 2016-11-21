@@ -127,19 +127,14 @@ class Muturank:
                         r[t, i, j] = r[t, i, j]/(a[:, i, j].sum())
         return a, o, r
 
-    def prob_t(self, d, j):
+    def prob_t(self, d, j, denom):
         # OPTIMIZE: calculate denominator once for both probabilities
-        p = (self.q_old[d]*self.sum_row[j, d])/np.sum([self.q_old[m]*self.a[j, l, m]
-                                                    for l in range(len(self.node_ids))
-                                                    for m in range(len(self.graphs))])
+        p = (self.q_old[d]*self.sum_row[j, d])/denom
         return p
 
-    def prob_n(self, i, j):
+    def prob_n(self, i, j, denom):
         # OPTIMIZE: calculate denominator once for both probabilities
-        p = np.sum([self.q_old[m]*self.a[i, j, m] for m in range(len(self.graphs))])/np.sum([self.q_old[m]*self.a[j,
-                                                                                                                 l, m]
-                                                                                  for l in range(len(self.node_ids))
-                                                                                  for m in range(len(self.graphs))])
+        p = np.sum([self.q_old[m]*self.a[i, j, m] for m in range(len(self.graphs))])/denom
         return p
 
 
@@ -180,14 +175,20 @@ class Muturank:
         while np.linalg.norm(self.p_new-self.p_old)**2 + np.linalg.norm(self.q_new-self.q_old)**2 > self.e:
             self.p_old = copy(self.p_new)
             self.q_old = copy(self.q_new)
+            # calculate prob denominators once
+            denom = np.zeros(self.num_of_nodes)
+            for i in range(self.num_of_nodes):
+                denom[i] = sum([self.q_old[m]*self.a[i, l, m]
+                               for l in range(self.num_of_nodes)
+                               for m in range(self.tfs)])
             for i in range(len(self.node_ids)):
                 self.p_new[i] = self.alpha *\
-                               np.sum([self.p_old[j]*self.o[i, j, m]*self.prob_t(m, j)
+                               np.sum([self.p_old[j]*self.o[i, j, m]*self.prob_t(m, j, denom[j])
                                     for j in range(len(self.node_ids))
                                     for m in range(len(self.graphs))])+(1-self.alpha)*p_star[i]
             for d in range(len(self.graphs)):
                 self.q_new[d] = self.beta *\
-                                np.sum([self.p_old[j]*self.r[i, j, d]* self.prob_n(i, j)
+                                np.sum([self.p_old[j]*self.r[i, j, d]* self.prob_n(i, j, denom[j])
                                      for i in range(len(self.node_ids))
                                      for j in range(len(self.node_ids))])+(1-self.beta)*q_star[d]
             t += 1
@@ -271,13 +272,13 @@ class Muturank:
         for j in range(self.num_of_nodes):
             sum = 0
             for d in range(self.tfs):
-                sum += self.prob_t(d, j)
+                sum += self.prob_t(d, j, denom[j])
             if sum != 1.0:
                 print "prob_t is", sum, " for j=", j
         for j in range(self.num_of_nodes):
             sum=0
             for i in range(self.num_of_nodes):
-                sum += self.prob_n(i, j)
+                sum += self.prob_n(i, j, denom[j])
             if sum != 1.0:
                 print "prob_n is", sum, " for i=", i
 

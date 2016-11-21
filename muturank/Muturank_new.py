@@ -131,13 +131,11 @@ class Muturank_new:
         return a
 
     def prob_t(self, d, j, denom):
-        # OPTIMIZE: calculate denominator once for both probabilities
         p = (self.q_old[d]*self.sum_row[j, d])/denom
         # np.sum([self.q_old[m]*self.a[m][j, l] for l in range(self.num_of_nodes*self.tfs) for m in range(self.tfs)])
         return p
 
     def prob_n(self, i, j, denom):
-        # OPTIMIZE: calculate denominator once for both probabilities
         p = np.sum([self.q_old[m]*self.a[m][j, i] for m in range(self.tfs)])/denom
         # np.sum([self.q_old[m]*self.a[m][j, l] for l in range(self.num_of_nodes*self.tfs) for m in range(self.tfs)])
         return p
