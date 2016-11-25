@@ -7,11 +7,13 @@ from copy import deepcopy, copy
 from scipy import sparse
 from sklearn.cluster import spectral_clustering
 import time
+import pprint
 np.set_printoptions(precision=3, linewidth=200)
 
 
+
 class Muturank_new:
-    def __init__(self, graphs, threshold, alpha, beta):
+    def __init__(self, graphs, threshold, alpha, beta, connection):
         self.graphs = graphs
         self.node_ids = list(set([node for i in graphs for node in nx.nodes(graphs[i])]))
         self.num_of_nodes = len(self.node_ids)
@@ -20,7 +22,7 @@ class Muturank_new:
         self.node_pos = {node_id: i for i, node_id in enumerate(self.node_ids)}
         # self.a, self.o, self.r, self.sum_row, self.sum_time = self.create_sptensors()
         print "Creating tensors a, o ,r..."
-        self.a, self.o, self.r, self.sum_row, self.sum_time = self.create_sptensors()
+        self.a, self.o, self.r, self.sum_row, self.sum_time = self.create_sptensors(connection)
         self.e = threshold
         self.alpha = alpha
         self.beta = beta
@@ -39,8 +41,9 @@ class Muturank_new:
         # self.tensor= self.create_dense_tensors(graphs)
         # self.frame = self.create_dataframes(self.tensor)
         #self.check_probs()
+        print self.w.toarray()
 
-    def create_sptensors(self):
+    def create_sptensors(self, connection):
         """
             Create a sparse tensor
             :param :
@@ -59,15 +62,11 @@ class Muturank_new:
                 a[i][i*self.num_of_nodes + self.node_pos[u], i*self.num_of_nodes + self.node_pos[v]] = 1
                 a[i][i*self.num_of_nodes + self.node_pos[v], i*self.num_of_nodes + self.node_pos[u]] = 1
         # add time edges
-        a = self.add_time_edges(a, 'all')
-        # print a[1].toarray()
+        a = self.add_time_edges(a, connection)
+        print a[0].toarray()
         o = deepcopy(a)
         r = deepcopy(a)
         sum_rows = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.tfs), dtype=np.float32)
-        for t in range(self.tfs):
-            for i in range(self.num_of_nodes*self.tfs):
-                # sum_rows[i, t] = a[t].sum(1)[i]
-                pass
         for t in range(self.tfs):
             for i in range(self.num_of_nodes*self.tfs):
                 sum_rows[i, t] = a[t].sum(1)[i]
@@ -81,7 +80,7 @@ class Muturank_new:
                                 o[t][i, j] = a[t][i, j]/sum_rows[i, t]
                         except ZeroDivisionError:
                             pass
-        # print o[1].toarray()
+        print o[1].toarray()
         sum_time = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float32)
         for i in range(self.num_of_nodes*self.tfs):
             for j in range(self.num_of_nodes*self.tfs):
@@ -98,6 +97,8 @@ class Muturank_new:
         return a, o, r, sum_rows, sum_time
 
     def add_time_edges(self, a, connection):
+        # FIXME: add time edges with small weight 0.0001 for nodes that dont exist in specific timeframes
+        # check if node i exists in graph[timeframe]
         if connection == 'one':
             # connect only with previous and next timeframe
             for t in range(self.tfs):
@@ -166,30 +167,31 @@ class Muturank_new:
         q_star = np.repeat(1/self.tfs, self.tfs)
         self.p_new = np.repeat(1/(self.num_of_nodes*self.tfs), self.num_of_nodes*self.tfs)
         self.q_new = np.repeat(1/self.tfs, self.tfs)
-        self.p_old = np.zeros((len(p_star)))
-        self.q_old = np.zeros((len(q_star)))
+        self.p_old = np.repeat(1/(self.num_of_nodes*self.tfs), self.num_of_nodes*self.tfs)
+        self.q_old = np.repeat(1/self.tfs, self.tfs)
         # while ||p(t)-p(t-1)||^2 + ||q(t) - q(t-1||^2 >=e
         start = True
-        while (np.linalg.norm(self.p_new-self.p_old)**2 + np.linalg.norm(self.q_new-self.q_old)**2 > self.e) or (start):
+        while (np.linalg.norm(self.p_new-self.p_old)**2 + np.linalg.norm(self.q_new-self.q_old)**2 >= self.e) or (
+                start):
             start = False
             self.p_old = copy(self.p_new)
             self.q_old = copy(self.q_new)
             # calculate prob denominators once
             denom = np.zeros(self.num_of_nodes*self.tfs)
             for i in range(self.num_of_nodes*self.tfs):
-                denom[i] = sum([self.q_old[m]*self.a[m][i, l]
-                               for l in range(self.num_of_nodes*self.tfs)
-                               for m in range(self.tfs)])
+                denom[i] = np.sum([self.q_old[m]*self.a[m][i, l]
+                                  for l in range(self.num_of_nodes*self.tfs)
+                                  for m in range(self.tfs)])
             for i in range(self.num_of_nodes*self.tfs):
                 self.p_new[i] = self.alpha *\
-                               sum([self.p_old[j]*self.o[d][i, j]*self.prob_t(d, j, denom[j])
-                                    for j in range(self.num_of_nodes*self.tfs)
-                                    for d in range(self.tfs)])+(1-self.alpha)*p_star[i]
+                               np.sum([self.p_old[j]*self.o[d][i, j]*self.prob_t(d, j, denom[j])
+                                      for j in range(self.num_of_nodes*self.tfs)
+                                      for d in range(self.tfs)])+(1-self.alpha)*p_star[i]
             for d in range(self.tfs):
                 self.q_new[d] = self.beta *\
-                                sum([self.p_old[j]*self.r[d][i, j]* self.prob_n(i, j, denom[j])
-                                     for i in range(self.num_of_nodes*self.tfs)
-                                     for j in range(self.num_of_nodes*self.tfs)])+(1-self.beta)*q_star[d]
+                                np.sum([self.p_old[j]*self.r[d][i, j]*self.prob_n(i, j, denom[j])
+                                       for i in range(self.num_of_nodes*self.tfs)
+                                       for j in range(self.num_of_nodes*self.tfs)])+(1-self.beta)*q_star[d]
             t += 1
             self.check_probs()
         """checking the calculation of probabilities
@@ -201,10 +203,10 @@ class Muturank_new:
         return
 
     def create_monorelational(self):
-        w = sparse.eye(self.num_of_nodes*self.tfs, dtype=np.float32,format="dok")
+        w = sparse.eye(self.num_of_nodes*self.tfs, dtype=np.float32, format="dok")
         for i in range(self.num_of_nodes*self.tfs):
             for j in range(self.num_of_nodes*self.tfs):
-                value = sum([self.q_new[d]*self.a[d][i, j] for d in range(self.tfs)])
+                value = np.sum([self.q_new[d]*self.a[d][i, j] for d in range(self.tfs)])
                 if value:
                     w[i, j] = value
         return w
@@ -229,17 +231,15 @@ class Muturank_new:
                 comms[c].append(str(self.node_ids[node])+"-t"+str(tf))
             except KeyError:
                 comms[c] = [str(self.node_ids[node])+"-t"+str(tf)]
-
         print clusters
-        import pprint
-        pprint.pprint(comms)
+        pprint.PrettyPrinter(width=200).pprint(comms)
 
     def check_probs(self):
         if np.sum(self.p_new)!=1.0:
             print "p_new ", np.sum(self.p_new) , self.p_new
         if np.sum(self.q_new)!=1.0:
             print "q_new ", np.sum(self.q_new), self.q_new
-        denom = np.zeros(self.num_of_nodes*self.tfs)
+        """denom = np.zeros(self.num_of_nodes*self.tfs)
         for i in range(self.num_of_nodes*self.tfs):
             denom[i] = np.sum([self.q_old[m]*self.a[m][i, l]
                            for l in range(self.num_of_nodes*self.tfs)
@@ -255,7 +255,7 @@ class Muturank_new:
             for i in range(self.num_of_nodes*self.tfs):
                 sum += self.prob_n(i, j, denom[j])
             if sum != 1.0:
-                print "prob_n is", sum, " for i=", i
+                print "prob_n is", sum, " for i=", i"""
 
 
 if __name__ == '__main__':
@@ -279,6 +279,6 @@ if __name__ == '__main__':
     graphs = {}
     for i, edges in edges.items():
         graphs[i] = nx.Graph(edges)
-    mutu = Muturank_new(graphs, 1e-6, 0.85, 0.85)
+    mutu = Muturank_new(graphs, 1e-6, 0.85, 0.85, 'one')
     # print mutu.a[mutu.node_pos[1],mutu.node_pos[4],1]
     # print mutu.r
