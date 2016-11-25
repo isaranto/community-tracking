@@ -14,7 +14,6 @@ np.set_printoptions(precision=3, linewidth=300,formatter={'float_kind':'{:.9f}'.
 
 
 
-
 class Muturank_new:
     def __init__(self, graphs, threshold, alpha, beta, connection):
         self.graphs = graphs
@@ -67,6 +66,7 @@ class Muturank_new:
                 a[i][i*self.num_of_nodes + self.node_pos[v], i*self.num_of_nodes + self.node_pos[u]] = d['weight']
         # add time edges
         a = self.add_time_edges(a, connection)
+        print self.check_irreducibility(a)
         #a = self.irr_time_edges(a)
         print a[0].toarray()
         o = deepcopy(a)
@@ -140,7 +140,6 @@ class Muturank_new:
         """
         get connected components per timeframe and add an edge between them (with weight 0.0001)
 
-
         :param graph:
         :return: the irreducible graph for this timeframe
         """
@@ -157,13 +156,6 @@ class Muturank_new:
         graph.add_weighted_edges_from(edges)
         return graph
 
-
-    def irr_time_edges(self, a):
-        """
-        add time edges with small weight 0.0001 for nodes that dont exist in specific timeframes
-        :param a:
-        :return:
-        """
 
     def prob_t(self, d, j, denom):
         p = (self.q_old[d]*self.sum_cols[j, d])/denom
@@ -293,6 +285,22 @@ class Muturank_new:
                 sum += self.prob_n(i, j, denom[j])
             if sum != 1.0:
                 print "prob_n is", sum, " for i=", i
+
+    def check_irreducibility(self, a):
+        check = True
+        for _, graph in self.graphs.iteritems():
+            check = check and nx.is_connected(graph)
+        for t in range(self.tfs):
+            edges = []
+            for j in range(self.num_of_nodes*self.tfs):
+                for j in range(self.num_of_nodes*self.tfs):
+                    if a[t][i, j] !=0:
+                        edges.append((i,j))
+            graph = nx.Graph(edges)
+            check = check and nx.is_connected(graph)
+        return check
+
+
 
 
 if __name__ == '__main__':
