@@ -20,9 +20,9 @@ class Muturank_new:
         self.tfs = len(self.graphs)
         # create a dict with {node_id : tensor_position} to be able to retrieve node_id
         self.node_pos = {node_id: i for i, node_id in enumerate(self.node_ids)}
-        # self.a, self.o, self.r, self.sum_row, self.sum_time = self.create_sptensors()
+        # self.a, self.o, self.r, self.sum_cols, self.sum_time = self.create_sptensors()
         print "Creating tensors a, o ,r..."
-        self.a, self.o, self.r, self.sum_row, self.sum_time = self.create_sptensors(connection)
+        self.a, self.o, self.r, self.sum_cols, self.sum_time = self.create_sptensors(connection)
         self.e = threshold
         self.alpha = alpha
         self.beta = beta
@@ -66,18 +66,18 @@ class Muturank_new:
         print a[0].toarray()
         o = deepcopy(a)
         r = deepcopy(a)
-        sum_rows = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.tfs), dtype=np.float32)
+        sum_cols = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.tfs), dtype=np.float32)
         for t in range(self.tfs):
-            for i in range(self.num_of_nodes*self.tfs):
-                sum_rows[i, t] = a[t].sum(1)[i]
-                for j in range(i+1):
+            for j in range(self.num_of_nodes*self.tfs):
+                sum_cols[j, t] = a[t].sum(0)[0, j]
+                for i in range(j+1):
                     if a[t][i, j] != 0:
                         try:
                             # o[t][j,i] = a[t][j, i]/np.sum(a[t][j, :])
-                            o[t][j, i] = a[t][j, i]/sum_rows[j, t]
+                            o[t][i, j] = a[t][i, j]/sum_cols[j, t]
                             if i != j:
                                 # o[t][i, j] = a[t][i, j]/np.sum(a[t][i, :])
-                                o[t][i, j] = a[t][i, j]/sum_rows[i, t]
+                                o[t][j, i] = a[t][j, i]/sum_cols[i, t]
                         except ZeroDivisionError:
                             pass
         print o[1].toarray()
@@ -94,7 +94,7 @@ class Muturank_new:
                         r[t][j, i] = a[t][j, i]/sum_time[j, i]
                         r[t][i, j] = a[t][i, j]/sum_time[i, j]
         # print r[1].toarray()
-        return a, o, r, sum_rows, sum_time
+        return a, o, r, sum_cols, sum_time
 
     def add_time_edges(self, a, connection):
         # FIXME: add time edges with small weight 0.0001 for nodes that dont exist in specific timeframes
@@ -132,7 +132,7 @@ class Muturank_new:
         return a
 
     def prob_t(self, d, j, denom):
-        p = (self.q_old[d]*self.sum_row[j, d])/denom
+        p = (self.q_old[d]*self.sum_cols[j, d])/denom
         # np.sum([self.q_old[m]*self.a[m][j, l] for l in range(self.num_of_nodes*self.tfs) for m in range(self.tfs)])
         return p
 
