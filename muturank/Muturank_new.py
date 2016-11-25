@@ -8,7 +8,10 @@ from scipy import sparse
 from sklearn.cluster import spectral_clustering
 import time
 import pprint
-np.set_printoptions(precision=3, linewidth=200)
+import random
+np.set_printoptions(precision=3, linewidth=300,formatter={'float_kind':'{:.9f}'.format})
+
+
 
 
 
@@ -52,17 +55,19 @@ class Muturank_new:
         tuples = []
         a = {}
         for i, (t, graph) in enumerate(self.graphs.iteritems()):
+            irr_graph = self.irr_components(graph)
             # a[i] = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float32)
             a[i] = sparse.eye(self.num_of_nodes*self.tfs, dtype=np.float32, format="dok")
-            for u, v in graph.edges_iter():
+            for u, v, d in irr_graph.edges_iter(data=True):
                 # add self edges for nodes that exist
                 a[i][i*self.num_of_nodes + self.node_pos[u], i*self.num_of_nodes + self.node_pos[u]] = 1
                 a[i][i*self.num_of_nodes + self.node_pos[v], i*self.num_of_nodes + self.node_pos[v]] = 1
                 # add edges - create symmetric matrix
-                a[i][i*self.num_of_nodes + self.node_pos[u], i*self.num_of_nodes + self.node_pos[v]] = 1
-                a[i][i*self.num_of_nodes + self.node_pos[v], i*self.num_of_nodes + self.node_pos[u]] = 1
+                a[i][i*self.num_of_nodes + self.node_pos[u], i*self.num_of_nodes + self.node_pos[v]] = d['weight']
+                a[i][i*self.num_of_nodes + self.node_pos[v], i*self.num_of_nodes + self.node_pos[u]] = d['weight']
         # add time edges
         a = self.add_time_edges(a, connection)
+        #a = self.irr_time_edges(a)
         print a[0].toarray()
         o = deepcopy(a)
         r = deepcopy(a)
@@ -131,6 +136,35 @@ class Muturank_new:
 
         return a
 
+    def irr_components(self, graph):
+        """
+        get connected components per timeframe and add an edge between them (with weight 0.0001)
+
+
+        :param graph:
+        :return: the irreducible graph for this timeframe
+        """
+        # setting a standard seed to get deterministic behavior
+        random.seed(0)
+        for u, v , d in graph.edges(data=True):
+            d['weight'] = 1
+        nodes = []
+        for comps in nx.connected_components(graph):
+            nodes.append(random.choice(list(comps)))
+        edges = []
+        for i in range(len(nodes)-1):
+            edges.append((nodes[i], nodes[i+1], 1e-4))
+        graph.add_weighted_edges_from(edges)
+        return graph
+
+
+    def irr_time_edges(self, a):
+        """
+        add time edges with small weight 0.0001 for nodes that dont exist in specific timeframes
+        :param a:
+        :return:
+        """
+
     def prob_t(self, d, j, denom):
         p = (self.q_old[d]*self.sum_cols[j, d])/denom
         # np.sum([self.q_old[m]*self.a[m][j, l] for l in range(self.num_of_nodes*self.tfs) for m in range(self.tfs)])
@@ -192,6 +226,9 @@ class Muturank_new:
                                 np.sum([self.p_old[j]*self.r[d][i, j]*self.prob_n(i, j, denom[j])
                                        for i in range(self.num_of_nodes*self.tfs)
                                        for j in range(self.num_of_nodes*self.tfs)])+(1-self.beta)*q_star[d]
+            # divide each element with the sum of the distribution in order to reduce the error
+            self.p_new = self.p_new/np.sum(self.p_new)
+            self.q_new = self.q_new/np.sum(self.q_new)
             t += 1
             self.check_probs()
         """checking the calculation of probabilities
@@ -236,10 +273,10 @@ class Muturank_new:
 
     def check_probs(self):
         if np.sum(self.p_new)!=1.0:
-            print "p_new ", np.sum(self.p_new) , self.p_new
+            print "p_new ", np.sum(self.p_new) #, self.p_new
         if np.sum(self.q_new)!=1.0:
-            print "q_new ", np.sum(self.q_new), self.q_new
-        """denom = np.zeros(self.num_of_nodes*self.tfs)
+            print "q_new ", np.sum(self.q_new)#, self.q_new
+        denom = np.zeros(self.num_of_nodes*self.tfs)
         for i in range(self.num_of_nodes*self.tfs):
             denom[i] = np.sum([self.q_old[m]*self.a[m][i, l]
                            for l in range(self.num_of_nodes*self.tfs)
@@ -255,7 +292,7 @@ class Muturank_new:
             for i in range(self.num_of_nodes*self.tfs):
                 sum += self.prob_n(i, j, denom[j])
             if sum != 1.0:
-                print "prob_n is", sum, " for i=", i"""
+                print "prob_n is", sum, " for i=", i
 
 
 if __name__ == '__main__':
@@ -276,6 +313,7 @@ if __name__ == '__main__':
         1: [(11, 12), (11, 13), (12, 13)],
         2: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)]
     }"""
+
     graphs = {}
     for i, edges in edges.items():
         graphs[i] = nx.Graph(edges)

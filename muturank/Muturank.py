@@ -55,6 +55,7 @@ class Muturank:
                                                                             len(self.node_ids),
                                                                             len(graphs)))
         o_values = []
+        # FIXME: Tensor O should be columnt normalized
         sum_rows = np.zeros((a.shape[0], a.shape[2]))
         for t in range(a.shape[2]):
             for i in range(a.shape[0]):
