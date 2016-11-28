@@ -9,7 +9,7 @@ from sklearn.cluster import spectral_clustering
 import time
 import pprint
 import random
-np.set_printoptions(precision=3, linewidth=300,formatter={'float_kind':'{:.9f}'.format})
+np.set_printoptions(precision=3, linewidth=300, formatter={'float_kind':'{:.4f}'.format})
 
 
 
@@ -66,8 +66,7 @@ class Muturank_new:
                 a[i][i*self.num_of_nodes + self.node_pos[v], i*self.num_of_nodes + self.node_pos[u]] = d['weight']
         # add time edges
         a = self.add_time_edges(a, connection)
-        print self.check_irreducibility(a)
-        #a = self.irr_time_edges(a)
+        # print self.check_irreducibility(a)
         print a[0].toarray()
         o = deepcopy(a)
         r = deepcopy(a)
@@ -102,27 +101,52 @@ class Muturank_new:
         return a, o, r, sum_cols, sum_time
 
     def add_time_edges(self, a, connection):
-        # FIXME: add time edges with small weight 0.0001 for nodes that dont exist in specific timeframes
         # check if node i exists in graph[timeframe]
         if connection == 'one':
             # connect only with previous and next timeframe
             for t in range(self.tfs):
                 for i in range(a[t].shape[0]):
                     try:
-                        if i < self.num_of_nodes:
-                            a[t][i, i + self.num_of_nodes] = 1
-                            a[t][i + self.num_of_nodes, i] = 1
-                        elif i > self.num_of_nodes*(self.tfs-1):
-                            a[t][i, i - self.num_of_nodes] = 1
-                            a[t][i - self.num_of_nodes, i] = 1
+                        # always check if the nodes exist in the timeframe
+                        # if they do, add an edge, else add a weak edge
+                        # in order to achieve irreducibility
+                        tf = i // self.num_of_nodes
+                        node = i % self.num_of_nodes
+                        if self.graphs[tf].has_node(self.node_ids[node]):
+                            this = True
                         else:
-                            a[t][i, i + self.num_of_nodes] = 1
-                            a[t][i + self.num_of_nodes, i] = 1
-                            a[t][i, i - self.num_of_nodes] = 1
-                            a[t][i - self.num_of_nodes, i] = 1
+                            this = False
+                        if i < self.num_of_nodes:
+                            if this and self.has_node(tf+1, node):
+                                a[t][i, i + self.num_of_nodes] = 1
+                                a[t][i + self.num_of_nodes, i] = 1
+                            else:
+                                a[t][i, i + self.num_of_nodes] = 1e-4
+                                a[t][i + self.num_of_nodes, i] = 1e-4
+                        elif i >= self.num_of_nodes*(self.tfs-1):
+                            if this and self.has_node(tf-1, node):
+                                a[t][i, i - self.num_of_nodes] = 1
+                                a[t][i - self.num_of_nodes, i] = 1
+                            else:
+                                a[t][i, i - self.num_of_nodes] = 1e-4
+                                a[t][i - self.num_of_nodes, i] = 1e-4
+                        else:
+                            if this and self.has_node(tf+1, node):
+                                a[t][i, i + self.num_of_nodes] = 1
+                                a[t][i + self.num_of_nodes, i] = 1
+                            else:
+                                a[t][i, i + self.num_of_nodes] = 1e-4
+                                a[t][i + self.num_of_nodes, i] = 1e-4
+                            if this and self.has_node(tf-1, node):
+                                a[t][i, i - self.num_of_nodes] = 1
+                                a[t][i - self.num_of_nodes, i] = 1
+                            else:
+                                a[t][i, i - self.num_of_nodes] = 1e-4
+                                a[t][i - self.num_of_nodes, i] = 1e-4
                     except IndexError:
                         pass
-        if connection == 'all':
+        # TODO: correctly connect all node-timeframes
+        """if connection == 'all':
             # connect only with previous and next timeframe
             for t in range(self.tfs):
                 for i in range(a[t].shape[0]):
@@ -132,7 +156,7 @@ class Muturank_new:
                                 a[t][i+self.num_of_nodes*m, i+self.num_of_nodes*n] = 1
                                 a[t][i+self.num_of_nodes*n, i+self.num_of_nodes*m] = 1
                             except IndexError:
-                                pass
+                                pass"""
 
         return a
 
@@ -145,7 +169,7 @@ class Muturank_new:
         """
         # setting a standard seed to get deterministic behavior
         random.seed(0)
-        for u, v , d in graph.edges(data=True):
+        for u, v, d in graph.edges(data=True):
             d['weight'] = 1
         nodes = []
         for comps in nx.connected_components(graph):
@@ -155,7 +179,6 @@ class Muturank_new:
             edges.append((nodes[i], nodes[i+1], 1e-4))
         graph.add_weighted_edges_from(edges)
         return graph
-
 
     def prob_t(self, d, j, denom):
         p = (self.q_old[d]*self.sum_cols[j, d])/denom
@@ -261,7 +284,7 @@ class Muturank_new:
             except KeyError:
                 comms[c] = [str(self.node_ids[node])+"-t"+str(tf)]
         print clusters
-        pprint.PrettyPrinter(width=200).pprint(comms)
+        pprint.pprint(comms)
 
     def check_probs(self):
         if np.sum(self.p_new)!=1.0:
@@ -300,7 +323,8 @@ class Muturank_new:
             check = check and nx.is_connected(graph)
         return check
 
-
+    def has_node(self, tf, node):
+        return self.graphs[tf].has_node(self.node_ids[node])
 
 
 if __name__ == '__main__':
@@ -308,8 +332,7 @@ if __name__ == '__main__':
         0: [(1, 3), (1, 4), (2, 4)],
         1: [(1, 4), (3, 4), (1, 2)],
         2: [(1, 4), (3, 4), (1, 2)]
-    }"""
-
+    }
     edges = {
     0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
     1: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7), (7, 8)],
@@ -320,7 +343,7 @@ if __name__ == '__main__':
         0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
         1: [(11, 12), (11, 13), (12, 13)],
         2: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)]
-    }"""
+    }
 
     graphs = {}
     for i, edges in edges.items():
