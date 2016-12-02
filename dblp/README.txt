@@ -40,13 +40,13 @@ For each conference we store lists with the papers (in the example above the fir
 		 			'components': we extract the connected components from each conference, and we use as ground truth communities those that have more than 4 nodes.
 	The data is being loaded into 2 python dictionaries (Hashmaps) - one for the graphs and one for the communities:
 		The graphs dictionary stores networkx graph objects for each timeframe. Note that for each timeframe a co-authorship graph is constructed(authors that have written a paper together share an edge)
-																{ 
-																	0: 1st_graph,
-																  	1: 2nd_graph...
-																}
+						{ 
+							0: 1st_graph,
+						  	1: 2nd_graph...
+						}
 		While the communities dictionary stores data using  the following structure:
 
-													{
-														year:
-															com_id: [list of nodes in the community]
-													}
+						{
+							year:
+								com_id: [list of nodes in the community]
+						}
