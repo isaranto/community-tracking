@@ -86,7 +86,7 @@ class dblp_loader:
         if coms == 'conf':
             self.communities = self.get_conf_com(start_year, end_year)
         else:
-            self.communities = self.get_cc_com(start_year, end_year)
+            self.communities, self.com_conf_map = self.get_cc_com(start_year, end_year)
 
 
     def get_edges(self, start_year, end_year):
@@ -211,16 +211,21 @@ class dblp_loader:
         :return:
         """
         com_time = {}
+        # keep a seperate dictionary with the com_id -> conference_name bindings
+        conference = {}
         for year, confs in self.conf_graphs.iteritems():
             comms = {}
+            conf_map = {}
             com_id = 1
-            for _, graph in confs.iteritems():
+            for conf_name, graph in confs.iteritems():
                 for com in list(nx.connected_components(graph)):
                     if len(com) > 4:
                         comms[com_id] = list(com)
+                        conf_map[com_id] = conf_name
                         com_id += 1
             com_time[year] = comms
-        return com_time
+            conference[year] = conf_map
+        return com_time, conference
 
     def get_stats(self):
         length = {}
