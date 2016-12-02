@@ -4,7 +4,7 @@ from dblp import dblp_parser, dblp_loader
 from plot import PlotGraphs
 from tensor import TensorFact
 from ged import GedLoad, GedWrite
-from muturank import Muturank
+from muturank import Muturank, Muturank_new
 import pprint
 
 
@@ -107,6 +107,19 @@ class CmdTool(cmd.Cmd):
         """
         Muturank(self.graphs)
         print("Tensor for use with Muturank")
+        return
+
+    def do_run_Muturank(self, connections):
+        """
+
+        :param connections:
+        :return:
+        """
+        threshold = 1e-6
+        alpha = 0.85
+        beta= 0.85
+        mutu = Muturank_new(self.graphs, threshold, alpha, beta, connections)
+        print("Running muturank")
         return
 
 

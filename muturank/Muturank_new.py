@@ -76,7 +76,7 @@ class Muturank_new:
         tuples = []
         # create adjacency tensor from initial graphs
         a = {}
-        for i, (t, graph) in enumerate(graphs.iteritems()):
+        for i, (t, graph) in enumerate(self.graphs.iteritems()):
             irr_graph = self.irr_components(graph)
             # a[i] = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
             a[i] = sparse.eye(self.num_of_nodes*self.tfs, dtype=np.float64, format="dok")
