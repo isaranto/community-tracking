@@ -12,8 +12,6 @@ import random
 np.set_printoptions(precision=3, linewidth=300, formatter={'float_kind':'{:.4f}'.format})
 
 
-
-
 class Muturank_new:
     def __init__(self, graphs, threshold, alpha, beta, connection):
         self.graphs = graphs
@@ -66,6 +64,7 @@ class Muturank_new:
                 a[i][i*self.num_of_nodes + self.node_pos[u], i*self.num_of_nodes + self.node_pos[v]] = d['weight']
                 a[i][i*self.num_of_nodes + self.node_pos[v], i*self.num_of_nodes + self.node_pos[u]] = d['weight']
         # add time edges
+        print self.check_irreducibility(a)
         a = self.add_time_edges(a, connection)
         print self.check_irreducibility(a)
         print a[0].toarray()
@@ -178,8 +177,24 @@ class Muturank_new:
         edges = []
         for i in range(len(nodes)-1):
             edges.append((nodes[i], nodes[i+1], 1e-4))
+        print edges
         graph.add_weighted_edges_from(edges)
         return graph
+
+    def irr_components_time(self, a):
+        """
+
+        :param a:
+        :return:
+        """
+        random.seed(0)
+        for t in range(self.tfs):
+            edges = []
+            for i in range(a[t].shape[0]):
+                for j in range(a[t].shape[0]):
+                    if a[t][i, j] != 0:
+                        edges.append((i, j))
+            graph = nx.Graph(edges)
 
     def prob_t(self, d, j, denom):
         p = (self.q_old[d]*self.sum_cols[j, d])/denom
@@ -316,7 +331,7 @@ class Muturank_new:
             check = check and nx.is_connected(graph)
         for t in range(self.tfs):
             edges = []
-            for j in range(self.num_of_nodes*self.tfs):
+            for i in range(self.num_of_nodes*self.tfs):
                 for j in range(self.num_of_nodes*self.tfs):
                     if a[t][i, j] != 0:
                         edges.append((i, j))
