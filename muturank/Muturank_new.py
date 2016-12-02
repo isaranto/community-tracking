@@ -44,15 +44,39 @@ class Muturank_new:
         print self.w.toarray()
         print self.check_irr_w()
 
+    def create_adj_tensor(self, graphs):
+        """
+        This function is being used to convert a dictionary of graphs { timeframe# : networkx_graph}
+        into a dictionary-tensor of the form { timeframe# : sparse_adjacency_matrix}
+        :param graphs:
+        :return:
+        """
+        a = {}
+        for i, (t, graph) in enumerate(graphs.iteritems()):
+            irr_graph = self.irr_components(graph)
+            # a[i] = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
+            a[i] = sparse.eye(self.num_of_nodes*self.tfs, dtype=np.float64, format="dok")
+            for u, v, d in irr_graph.edges_iter(data=True):
+                # add self edges for nodes that exist
+                a[i][u, u] = 1
+                a[i][v , v] = 1
+                # add edges - create symmetric matrix
+                a[i][u, v] = d['weight']
+                a[i][v, u] = d['weight']
+        return a
+
     def create_sptensors(self, connection):
         """
-            Create a sparse tensor
+            Create tensors A, O and R
+            Tensor a is initialized here, while function create_adj_tensor is being used to update a ,thus making it
+            irreducible after the time_edges are added
             :param :
             :return:
             """
         tuples = []
+        # create adjacency tensor from initial graphs
         a = {}
-        for i, (t, graph) in enumerate(self.graphs.iteritems()):
+        for i, (t, graph) in enumerate(graphs.iteritems()):
             irr_graph = self.irr_components(graph)
             # a[i] = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
             a[i] = sparse.eye(self.num_of_nodes*self.tfs, dtype=np.float64, format="dok")
@@ -64,8 +88,9 @@ class Muturank_new:
                 a[i][i*self.num_of_nodes + self.node_pos[u], i*self.num_of_nodes + self.node_pos[v]] = d['weight']
                 a[i][i*self.num_of_nodes + self.node_pos[v], i*self.num_of_nodes + self.node_pos[u]] = d['weight']
         # add time edges
-        print self.check_irreducibility(a)
         a = self.add_time_edges(a, connection)
+        # make irreducible again
+        a = self.irr_components_time(a)
         print self.check_irreducibility(a)
         print a[0].toarray()
         o = deepcopy(a)
@@ -188,13 +213,18 @@ class Muturank_new:
         :return:
         """
         random.seed(0)
+        graphs = {}
         for t in range(self.tfs):
             edges = []
             for i in range(a[t].shape[0]):
                 for j in range(a[t].shape[0]):
                     if a[t][i, j] != 0:
-                        edges.append((i, j))
-            graph = nx.Graph(edges)
+                        edges.append((i, j, a[t][i, j]))
+            graphs[t] = nx.Graph()
+            graphs[t].add_weighted_edges_from(edges)
+        return self.create_adj_tensor(graphs)
+
+
 
     def prob_t(self, d, j, denom):
         p = (self.q_old[d]*self.sum_cols[j, d])/denom
