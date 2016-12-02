@@ -87,6 +87,7 @@ class dblp_loader:
             self.communities = self.get_conf_com(start_year, end_year)
         else:
             self.communities, self.com_conf_map = self.get_cc_com(start_year, end_year)
+        self.create_new_file(start_year, end_year)
 
 
     def get_edges(self, start_year, end_year):
@@ -245,6 +246,24 @@ class dblp_loader:
             if len(years) > 10 and all(parts_list[j] >= 1000 for j in range(len(parts_list))):
                     confs.append(name)
         return length
+
+    def create_new_file(self, start_year, end_year):
+        """
+         exports a new json file, filtering the initial json with start-end years and conferences
+         :return:
+         """
+        filtered_data = {}
+        for year, conf_dict in self.data.iteritems():
+            if year in range(start_year, end_year+1):
+                filtered_data[year]={}
+                for conf, papers in conf_dict.iteritems():
+                    if conf in self.conf_list:
+                        filtered_data[year][conf]=papers
+        with open('../data/dblp/dblp_filtered.json', 'w')as fp:
+            json.dump(filtered_data, fp, indent=2)
+
+
+
 
 
 if __name__ == '__main__':
