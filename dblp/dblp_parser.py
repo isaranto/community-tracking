@@ -262,10 +262,6 @@ class dblp_loader:
         with open('../data/dblp/dblp_filtered.json', 'w')as fp:
             json.dump(filtered_data, fp, indent=2)
 
-
-
-
-
 if __name__ == '__main__':
     filename = "../data/dblp/my_dblp_data.json"
     dblp = dblp_loader(filename, start_year=2000, end_year=2004, coms='components')

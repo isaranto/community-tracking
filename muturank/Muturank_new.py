@@ -202,7 +202,6 @@ class Muturank_new:
         edges = []
         for i in range(len(nodes)-1):
             edges.append((nodes[i], nodes[i+1], 1e-4))
-        print edges
         graph.add_weighted_edges_from(edges)
         return graph
 
@@ -392,15 +391,12 @@ if __name__ == '__main__':
         1: [(1, 4), (3, 4), (1, 2)],
         2: [(1, 4), (3, 4), (1, 2)]
     }
-
-
     edges = {
     0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
     1: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7), (7, 8)],
     2: [(1, 2), (5, 6), (5, 8)]
-    }"""
-    # FIXME: case where irreducibility is not achieved
-
+    }
+    """
     edges = {
         0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
         1: [(11, 12), (11, 13), (12, 13)],
