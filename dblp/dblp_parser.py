@@ -72,7 +72,7 @@ class dblp_parser:
 
 
 class dblp_loader:
-    def __init__(self, _file, start_year, end_year, conf_file ='../data/dblp/confs.txt', coms='conf'):
+    def __init__(self, _file, start_year, end_year, conf_file='../data/dblp/confs.txt', coms='conf'):
         with open(_file, 'r')as fp:
             # load json and convert year-keys to int
             self.data = {int(k): v for k, v in json.load(fp).items()}
@@ -80,15 +80,14 @@ class dblp_loader:
         self.edges = self.get_edges(start_year, end_year)
         self.graphs = self.get_graphs(start_year, end_year)
         self.timeFrames = range(start_year, end_year+1)
-        #self.communities = self.get_comms(start_year, end_year)
+        # self.communities = self.get_comms(start_year, end_year)
         conf_edges = self.get_conf_edges(start_year, end_year)
-        self.conf_graphs = self.get_conf_graphs(conf_edges, start_year, end_year)
+        self.conf_graphs = self.get_conf_graphs(conf_edges)
         if coms == 'conf':
             self.communities = self.get_conf_com(start_year, end_year)
         else:
-            self.communities, self.com_conf_map = self.get_cc_com(start_year, end_year)
+            self.communities, self.com_conf_map = self.get_cc_com()
         self.create_new_file(start_year, end_year)
-
 
     def get_edges(self, start_year, end_year):
         """
@@ -126,11 +125,11 @@ class dblp_loader:
                         for u, v in combinations_with_replacement(authors, 2):
                             try:
                                 edge_time[int(year)][conf].append((u, v))
-                            except:
+                            except KeyError:
                                 edge_time[int(year)][conf] = [(u, v)]
         return edge_time
 
-    def get_conf_graphs(self, conf_edges, start_year, end_year):
+    def get_conf_graphs(self, conf_edges):
         graphs = {}
         for year, confs in conf_edges.iteritems():
             for conf, edges in confs.iteritems():
@@ -174,7 +173,6 @@ class dblp_loader:
                 conf_list.append(conf.strip().lower())
         return conf_list
 
-
     def get_conf_com(self, start_year, end_year):
         """
         Returns the author communities for the conferences specified in confs.txt
@@ -204,11 +202,9 @@ class dblp_loader:
             com_time[year] = comms
         return com_time
 
-    def get_cc_com(self, start_year, end_year):
+    def get_cc_com(self):
         """
         get communities that correspond to connected components
-        :param start_year:
-        :param end_year:
         :return:
         """
         com_time = {}
@@ -249,16 +245,18 @@ class dblp_loader:
 
     def create_new_file(self, start_year, end_year):
         """
-         exports a new json file, filtering the initial json with start-end years and conferences
-         :return:
-         """
+        exports a new json file, filtering the initial json with start-end years and conferences
+        :param start_year:
+        :param end_year:
+        :return:
+        """
         filtered_data = {}
         for year, conf_dict in self.data.iteritems():
             if year in range(start_year, end_year+1):
                 filtered_data[year]={}
                 for conf, papers in conf_dict.iteritems():
                     if conf in self.conf_list:
-                        filtered_data[year][conf]=papers
+                        filtered_data[year][conf] = papers
         with open('../data/dblp/dblp_filtered.json', 'w')as fp:
             json.dump(filtered_data, fp, indent=2)
 
