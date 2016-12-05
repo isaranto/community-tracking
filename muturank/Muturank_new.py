@@ -9,15 +9,16 @@ from sklearn.cluster import spectral_clustering
 import time
 import pprint
 import random
-np.set_printoptions(precision=3, linewidth=300, formatter={'float_kind':'{:.5f}'.format})
+np.set_printoptions(precision=3, linewidth=300, formatter={'float_kind': '{:.5f}'.format})
 
 
 class Muturank_new:
-    def __init__(self, graphs, threshold, alpha, beta, connection):
+    def __init__(self, graphs, threshold, alpha, beta, connection, clusters):
         self.graphs = graphs
         self.node_ids = list(set([node for i in graphs for node in nx.nodes(graphs[i])]))
         self.num_of_nodes = len(self.node_ids)
         self.tfs = len(self.graphs)
+        self.clusters = clusters
         # create a dict with {node_id : tensor_position} to be able to retrieve node_id
         self.node_pos = {node_id: i for i, node_id in enumerate(self.node_ids)}
         # self.a, self.o, self.r, self.sum_cols, self.sum_time = self.create_sptensors()
@@ -226,9 +227,6 @@ class Muturank_new:
                         edges.append((i, j, a[t][i, j]))
             graphs[t] = nx.Graph()
             graphs[t].add_weighted_edges_from(edges)
-        print graphs[0].get_edge_data(0,10)
-        #original value
-        print a[0][0,10]
         return self.create_adj_tensor(graphs)
 
 
@@ -318,7 +316,7 @@ class Muturank_new:
 
     def clustering(self):
         # TODO: how to obtain # of communities
-        clusters = spectral_clustering(self.w, n_clusters=3, n_init=10, eigen_solver='arpack')
+        clusters = spectral_clustering(self.w, n_clusters=self.clusters, n_init=10, eigen_solver='arpack')
         """com_time = {}
         for t in range(self.tfs):
             comms = {}
@@ -416,6 +414,6 @@ if __name__ == '__main__':
     graphs = {}
     for i, edges in edges.items():
         graphs[i] = nx.Graph(edges)
-    mutu = Muturank_new(graphs, 1e-6, 0.85, 0.85, 'one')
+    mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one', clusters=3)
     # print mutu.a[mutu.node_pos[1],mutu.node_pos[4],1]
     # print mutu.r
