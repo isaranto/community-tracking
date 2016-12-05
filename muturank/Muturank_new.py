@@ -9,7 +9,7 @@ from sklearn.cluster import spectral_clustering
 import time
 import pprint
 import random
-np.set_printoptions(precision=3, linewidth=300, formatter={'float_kind':'{:.4f}'.format})
+np.set_printoptions(precision=3, linewidth=300, formatter={'float_kind':'{:.5f}'.format})
 
 
 class Muturank_new:
@@ -42,7 +42,6 @@ class Muturank_new:
         # self.frame = self.create_dataframes(self.tensor)
         # self.check_probs()
         print self.w.toarray()
-        print self.check_irr_w()
 
     def create_adj_tensor(self, graphs):
         """
@@ -51,19 +50,19 @@ class Muturank_new:
         :param graphs:
         :return:
         """
-        a = {}
+        temp = {}
         for i, (t, graph) in enumerate(graphs.iteritems()):
             irr_graph = self.irr_components(graph)
             # a[i] = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
-            a[i] = sparse.eye(self.num_of_nodes*self.tfs, dtype=np.float64, format="dok")
+            temp[i] = sparse.eye(self.num_of_nodes*self.tfs, dtype=np.float64, format="dok")
             for u, v, d in irr_graph.edges_iter(data=True):
                 # add self edges for nodes that exist
-                a[i][u, u] = 1
-                a[i][v , v] = 1
+                temp[i][u, u] = 1
+                temp[i][v, v] = 1
                 # add edges - create symmetric matrix
-                a[i][u, v] = d['weight']
-                a[i][v, u] = d['weight']
-        return a
+                temp[i][u, v] = d['weight']
+                temp[i][v, u] = d['weight']
+        return temp
 
     def create_sptensors(self, connection):
         """
@@ -85,14 +84,19 @@ class Muturank_new:
                 a[i][i*self.num_of_nodes + self.node_pos[u], i*self.num_of_nodes + self.node_pos[u]] = 1
                 a[i][i*self.num_of_nodes + self.node_pos[v], i*self.num_of_nodes + self.node_pos[v]] = 1
                 # add edges - create symmetric matrix
-                a[i][i*self.num_of_nodes + self.node_pos[u], i*self.num_of_nodes + self.node_pos[v]] = d['weight']
-                a[i][i*self.num_of_nodes + self.node_pos[v], i*self.num_of_nodes + self.node_pos[u]] = d['weight']
+                try:
+                    a[i][i*self.num_of_nodes + self.node_pos[u], i*self.num_of_nodes + self.node_pos[v]] = d['weight']
+                    a[i][i*self.num_of_nodes + self.node_pos[v], i*self.num_of_nodes + self.node_pos[u]] = d['weight']
+                except KeyError:
+                    a[i][i*self.num_of_nodes + self.node_pos[u], i*self.num_of_nodes + self.node_pos[v]] = 1
+                    a[i][i*self.num_of_nodes + self.node_pos[v], i*self.num_of_nodes + self.node_pos[u]] = 1
+
         # add time edges
         a = self.add_time_edges(a, connection)
+        print "Adjacency tensor after adding time edges"
+        print a[0].toarray()
         # make irreducible again
         a = self.irr_components_time(a)
-        print self.check_irreducibility(a)
-        print a[0].toarray()
         o = deepcopy(a)
         r = deepcopy(a)
         sum_cols = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.tfs), dtype=np.float64)
@@ -109,7 +113,8 @@ class Muturank_new:
                                 o[t][j, i] = a[t][j, i]/sum_cols[i, t]
                         except ZeroDivisionError:
                             pass
-        print o[1].toarray()
+        print a[0].toarray()
+        print o[0].toarray()
         sum_time = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
         for i in range(self.num_of_nodes*self.tfs):
             for j in range(self.num_of_nodes*self.tfs):
@@ -194,8 +199,8 @@ class Muturank_new:
         """
         # setting a standard seed to get deterministic behavior
         random.seed(0)
-        for u, v, d in graph.edges(data=True):
-            d['weight'] = 1
+        """for u, v, d in graph.edges(data=True):
+            d['weight'] = 1"""
         nodes = []
         for comps in nx.connected_components(graph):
             nodes.append(random.choice(list(comps)))
@@ -221,6 +226,9 @@ class Muturank_new:
                         edges.append((i, j, a[t][i, j]))
             graphs[t] = nx.Graph()
             graphs[t].add_weighted_edges_from(edges)
+        print graphs[0].get_edge_data(0,10)
+        #original value
+        print a[0][0,10]
         return self.create_adj_tensor(graphs)
 
 
@@ -290,7 +298,7 @@ class Muturank_new:
             self.p_new = self.p_new/np.sum(self.p_new)
             self.q_new = self.q_new/np.sum(self.q_new)
             t += 1
-            self.check_probs()
+            # self.check_probs()
         """checking the calculation of probabilities
         for j in range(len(self.node_ids)):
             print sum([self.prob_n(i, j) for i in range(len(self.node_ids))])
@@ -309,6 +317,7 @@ class Muturank_new:
         return w
 
     def clustering(self):
+        # TODO: how to obtain # of communities
         clusters = spectral_clustering(self.w, n_clusters=3, n_init=10, eigen_solver='arpack')
         """com_time = {}
         for t in range(self.tfs):
@@ -325,7 +334,8 @@ class Muturank_new:
             try:
                 tf = n // self.num_of_nodes
                 node = n % self.num_of_nodes
-                comms[c].append(str(self.node_ids[node])+"-t"+str(tf))
+                if self.has_node(tf, node):
+                    comms[c].append(str(self.node_ids[node])+"-t"+str(tf))
             except KeyError:
                 comms[c] = [str(self.node_ids[node])+"-t"+str(tf)]
         print clusters
@@ -334,7 +344,7 @@ class Muturank_new:
     def check_probs(self):
         if np.sum(self.p_new)!=1.0:
             print "p_new ", np.sum(self.p_new) , self.p_new
-        if np.sum(self.q_new)!=1.0:
+        if np.sum(self.q_new) != 1.0:
             print "q_new ", np.sum(self.q_new), self.q_new
         denom = np.zeros(self.num_of_nodes*self.tfs)
         for i in range(self.num_of_nodes*self.tfs):
@@ -378,7 +388,7 @@ class Muturank_new:
             for j in range(self.w.shape[0]):
                 if self.w[i, j] != 0:
                     edges.append((i, j))
-                    count+=1
+                    count += 1
         graph = nx.Graph(edges)
         check = nx.is_connected(graph)
         return check
