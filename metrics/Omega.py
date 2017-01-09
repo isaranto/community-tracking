@@ -8,8 +8,6 @@ class Omega:
         self.nodes2 = self.get_node_assignment(comms2)
         self.nodes = list(set().union([node for i, com in comms2.iteritems() for node in com],
                                       [node for i, com in comms1.iteritems() for node in com]))
-
-        print self.nodes
         J,K,N,obs,tuples1,tuples2 = self.observed()
         exp = self.expected(J,K,N,tuples1,tuples2)
         self.omega_score = self.calc_omega(obs, exp)
@@ -71,7 +69,7 @@ class Omega:
             except KeyError:
                 pass
         obs = sum(A[j]/N for j in range(min(J, K)+1))
-        return J,K, N,obs,tuples1,tuples2
+        return J, K, N, obs, tuples1, tuples2
 
     def expected(self, J, K, N, tuples1, tuples2):
         N1 = Counter(tuples1.values())
@@ -82,9 +80,7 @@ class Omega:
     def calc_omega(self, obs, exp):
         return (obs-exp)/(1-exp)
 
-
-
-if  __name__ == '__main__':
+if __name__ == '__main__':
     comms1 = {1: [5, 6, 7], 2: [3, 4, 5], 3: [6, 7, 8]}
     comms2 = {1: [5, 6, 7], 2: [3, 4, 6], 3: [6, 7, 8]}
     comms3 = {1: [5, 6, 7], 2: [6, 7, 8], 3: [3, 4, 5]}

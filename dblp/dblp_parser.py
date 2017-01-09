@@ -4,6 +4,8 @@ import re
 from itertools import combinations_with_replacement
 import networkx as nx
 import pprint
+import pickle
+import time
 
 
 class dblp_parser:
@@ -262,10 +264,36 @@ class dblp_loader:
 
 if __name__ == '__main__':
     filename = "../data/dblp/my_dblp_data.json"
-    dblp = dblp_loader(filename, start_year=2000, end_year=2004, coms='components')
+    try:
+        with open('../data/dblp/dblp.pkl', 'rb')as fp:
+            print "loading..."
+            start = time.time()
+            dblp = pickle.load(fp)
+    except IOError:
+        print "creating..."
+        start = time.time()
+        dblp = dblp_loader(filename, start_year=2000, end_year=2004, coms='components')
+        with open('../data/dblp/dblp.pkl', 'wb')as fp:
+            pickle.dump(dblp, fp, pickle.HIGHEST_PROTOCOL)
+
     # pprint.pprint(dblp.communities[2000])
-    """stats = dblp.get_stats()
-    pprint.pprint(dblp.data, indent=4, width=2)
-    for i, graph in dblp.graphs.iteritems():
-        print i, nx.number_connected_components(graph)
-"""
+    stats = dblp.get_stats()
+    #pprint.pprint(dblp.data, indent=4, width=2)
+    """for i, graph in dblp.graphs.iteritems():
+        print i, nx.number_connected_components(graph)"""
+
+    conf_life = {}
+    for year, data in dblp.data.iteritems():
+        if year>1990:
+            for conf, _ in data.iteritems():
+                try:
+                    conf_life[conf].append(year)
+                except KeyError:
+                    conf_life[conf] = [year]
+                except TypeError:
+                    print conf, year
+    for conf in conf_life.keys():
+        if len(conf_life[conf])<5:
+            conf_life.pop(conf, None)
+    with open("../data/dblp/conf_life_after1990.json", mode='w') as fp:
+        json.dump(conf_life, fp, indent=4)
