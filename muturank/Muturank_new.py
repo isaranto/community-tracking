@@ -18,6 +18,7 @@ class Muturank_new:
         self.node_ids = list(set([node for i in graphs for node in nx.nodes(graphs[i])]))
         self.num_of_nodes = len(self.node_ids)
         self.tfs = len(self.graphs)
+        self.tfs_list = self.graphs.keys()
         self.clusters = clusters
         # create a dict with {node_id : tensor_position} to be able to retrieve node_id
         self.node_pos = {node_id: i for i, node_id in enumerate(self.node_ids)}
@@ -42,7 +43,7 @@ class Muturank_new:
         # self.tensor= self.create_dense_tensors(graphs)
         # self.frame = self.create_dataframes(self.tensor)
         # self.check_probs()
-        print self.w.toarray()
+        print self.q_new
 
     def create_adj_tensor(self, graphs):
         """
@@ -95,7 +96,6 @@ class Muturank_new:
         # add time edges
         a = self.add_time_edges(a, connection)
         print "Adjacency tensor after adding time edges"
-        print a[0].toarray()
         # make irreducible again
         a = self.irr_components_time(a)
         o = deepcopy(a)
@@ -114,8 +114,6 @@ class Muturank_new:
                                 o[t][j, i] = a[t][j, i]/sum_cols[i, t]
                         except ZeroDivisionError:
                             pass
-        print a[0].toarray()
-        print o[0].toarray()
         sum_time = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
         for i in range(self.num_of_nodes*self.tfs):
             for j in range(self.num_of_nodes*self.tfs):
@@ -143,7 +141,7 @@ class Muturank_new:
                         # in order to achieve irreducibility
                         tf = i // self.num_of_nodes
                         node = i % self.num_of_nodes
-                        if self.graphs[tf].has_node(self.node_ids[node]):
+                        if self.graphs[self.tfs_list[tf]].has_node(self.node_ids[node]):
                             this = True
                         else:
                             this = False
@@ -328,20 +326,21 @@ class Muturank_new:
                 #print self.node_ids[node], clusters[node + t*self.num_of_nodes]
             com_time[t] = comms"""
         comms = {}
+        com_time ={}
         for n, c in enumerate(clusters):
             try:
                 tf = n // self.num_of_nodes
                 node = n % self.num_of_nodes
                 if self.has_node(tf, node):
                     comms[c].append(str(self.node_ids[node])+"-t"+str(tf))
+                    #com_time[tf] = []
             except KeyError:
                 comms[c] = [str(self.node_ids[node])+"-t"+str(tf)]
-        print clusters
         pprint.pprint(comms)
 
     def check_probs(self):
         if np.sum(self.p_new)!=1.0:
-            print "p_new ", np.sum(self.p_new) , self.p_new
+            print "p_new ", np.sum(self.p_new), self.p_new
         if np.sum(self.q_new) != 1.0:
             print "q_new ", np.sum(self.q_new), self.q_new
         denom = np.zeros(self.num_of_nodes*self.tfs)
@@ -377,7 +376,7 @@ class Muturank_new:
         return check
 
     def has_node(self, tf, node):
-        return self.graphs[tf].has_node(self.node_ids[node])
+        return self.graphs[self.tfs_list[tf]].has_node(self.node_ids[node])
 
     def check_irr_w(self):
         edges = []

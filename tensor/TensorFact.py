@@ -102,7 +102,7 @@ class TensorFact:
             print "Error = ", error, " seed: ", best_seed
         else:
             print "Error = ", error, "with Custom init", ", seed: ", best_seed
-        print "A = \n", A,"\n B = \n", B,"\n C = \n", C
+        print "A = \n", A, "\n B = \n", B, "\n C = \n", C
         return A, B, C
 
     def tensor_decomp(self, seed, random_init=True):

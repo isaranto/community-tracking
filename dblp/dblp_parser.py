@@ -89,7 +89,7 @@ class dblp_loader:
             self.communities = self.get_conf_com(start_year, end_year)
         else:
             self.communities, self.com_conf_map = self.get_cc_com()
-        self.create_new_file(start_year, end_year)
+        #self.create_new_file(start_year, end_year)
 
     def get_edges(self, start_year, end_year):
         """
@@ -259,6 +259,8 @@ class dblp_loader:
                 for conf, papers in conf_dict.iteritems():
                     if conf in self.conf_list:
                         filtered_data[year][conf] = papers
+        import os
+        print os.path.dirname(os.path.realpath(__file__))
         with open('../data/dblp/dblp_filtered.json', 'w')as fp:
             json.dump(filtered_data, fp, indent=2)
 
@@ -281,7 +283,7 @@ if __name__ == '__main__':
     #pprint.pprint(dblp.data, indent=4, width=2)
     """for i, graph in dblp.graphs.iteritems():
         print i, nx.number_connected_components(graph)"""
-
+    # TODO:  add some comments
     conf_life = {}
     for year, data in dblp.data.iteritems():
         if year>1990:

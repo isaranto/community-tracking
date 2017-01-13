@@ -56,7 +56,8 @@ class CmdTool(cmd.Cmd):
         :return:
         """
         if not filePath:
-            filePath = "/home/lias/Dropbox/Msc/thesis/src/NEW/synthetic-data-generator/src/expand/"
+            # filePath = "/home/lias/Dropbox/Msc/thesis/src/NEW/synthetic-data-generator/src/expand/"
+            filePath = "data/synthetic/expand"
         sd = SyntheticDataConverter(filePath)
         self.graphs = sd.graphs
         self.comms = sd.communities
@@ -87,16 +88,18 @@ class CmdTool(cmd.Cmd):
         print "DBLP data have been successfully loaded!"
         return
 
-    def do_nntfact(self, seeds, random_init, thres=1e-4):
+    def do_nntfact(self, params):
         """
 
-        :param e:
+        :param params:
         :return:
         """
+        k, seeds = params.split()
         # num_of_coms = len(set([c for _,comms in self.comms.iteritems() for c in comms ]))
         # set number of factors to the max number of communities in all timeframes
-        num_of_coms = max([len(comms) for tf, comms in self.comms.iteritems()])
-        TensorFact(self.graphs, num_of_coms, float(thres), int(seeds), random_init=random_init)
+        if not k:
+            k = max([len(comms) for tf, comms in self.comms.iteritems()])
+        TensorFact(self.graphs, num_of_coms=int(k), threshold = 1e-4, seeds= int(seeds))
         return
 
     def do_create_muturank_tensor(self, connections):
@@ -109,7 +112,7 @@ class CmdTool(cmd.Cmd):
         print("Tensor for use with Muturank")
         return
 
-    def do_run_Muturank(self, connections):
+    def do_run_Muturank(self, k, connection='one'):
         """
 
         :param connections:
@@ -118,8 +121,7 @@ class CmdTool(cmd.Cmd):
         threshold = 1e-6
         alpha = 0.85
         beta= 0.85
-        mutu = Muturank_new(self.graphs, threshold, alpha, beta, connections)
-        print("Running muturank")
+        mutu = Muturank_new(self.graphs, threshold, alpha, beta, connection, clusters=int(k))
         return
 
 
