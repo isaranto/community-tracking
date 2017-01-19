@@ -123,3 +123,4 @@ test/
 venv/
 img/
 ncp/
+metrics/nmi
