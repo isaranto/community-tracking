@@ -25,7 +25,7 @@ class SyntheticDataConverter:
         self.communities = self.get_comms()
         self.events = self.get_events()
         self.graphs = {}
-        for i in range(1, self.timeFrames+1):
+        for i in range(self.timeFrames):
             self.graphs[int(i)] = nx.Graph(self.edges[i])
         self.add_self_edges()
 
@@ -33,7 +33,7 @@ class SyntheticDataConverter:
 
     def get_edges(self):
         edge_time = {}
-        for i, e_file in enumerate(self.edges_files, 1):
+        for i, e_file in enumerate(self.edges_files):
             edge_time[i] = []
             with open(self.filePath+e_file, 'r') as fp:
                 for line in fp:
@@ -47,17 +47,17 @@ class SyntheticDataConverter:
 
     def get_comms(self):
         com_time = {}
-        for timeFrame, c_file in enumerate(self.comm_files, 1):
+        for timeFrame, c_file in enumerate(self.comm_files):
             with open(self.filePath+c_file, 'r') as fp:
                 comms = {}
-                for j, line in enumerate(fp, 1):
+                for j, line in enumerate(fp):
                     comms[int(j)] = [int(node) for node in line.split()]
             com_time[int(timeFrame)] = comms
         return com_time
 
     def get_events(self):
         events = {}
-        for i, e_file in enumerate(self.event_file, 1):
+        for i, e_file in enumerate(self.event_file):
             with open(self.filePath+e_file, 'r') as fp:
                 for line in fp:
                     event = {}
@@ -78,13 +78,13 @@ class SyntheticDataConverter:
         """
         dyn_communities = {}
         # TODO maybe we can use OrderedDict if appropriate
-        for i, _file in enumerate(self.timeline_file, 1):
+        for i, _file in enumerate(self.timeline_file):
             with open(self.filePath+_file, 'r') as fp:
                 for line in fp:
                     timeline = {}
                     comm = int(line.split(":")[0].translate(None, "M"))
                     time_list = line.split(":")[1].strip().strip(",").split(",")
-                    for time, value in enumerate(time_list, 1):
+                    for time, value in enumerate(time_list):
                         timeline[time] = int(value.split("=")[1])
                     dyn_communities[comm] = timeline
         return dyn_communities

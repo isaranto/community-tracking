@@ -5,6 +5,7 @@ from plot import PlotGraphs
 from tensor import TensorFact
 from ged import GedLoad, GedWrite
 from muturank import Muturank, Muturank_new
+from metrics import NMI
 import pprint
 
 
@@ -56,11 +57,11 @@ class CmdTool(cmd.Cmd):
         :return:
         """
         if not filePath:
-            # filePath = "/home/lias/Dropbox/Msc/thesis/src/NEW/synthetic-data-generator/src/expand/"
+            #filePath = "/home/lias/Dropbox/Msc/thesis/src/NEW/synthetic-data-generator/src/expand/"
             filePath = "data/synthetic/expand"
         sd = SyntheticDataConverter(filePath)
         self.graphs = sd.graphs
-        self.comms = sd.communities
+        self.ground_comms = sd.communities
         self.timeFrames = sd.timeFrames
         self.timeline = sd.get_timeline()
         self.type = sd.type
@@ -99,7 +100,7 @@ class CmdTool(cmd.Cmd):
         # set number of factors to the max number of communities in all timeframes
         if not k:
             k = max([len(comms) for tf, comms in self.comms.iteritems()])
-        TensorFact(self.graphs, num_of_coms=int(k), threshold = 1e-4, seeds= int(seeds))
+        TensorFact(self.graphs, num_of_coms=int(k), threshold=1e-4, seeds= int(seeds))
         return
 
     def do_create_muturank_tensor(self, connections):
@@ -122,7 +123,17 @@ class CmdTool(cmd.Cmd):
         alpha = 0.85
         beta= 0.85
         mutu = Muturank_new(self.graphs, threshold, alpha, beta, connection, clusters=int(k))
+        self.comms = mutu.dynamic_com
         return
+
+    def do_evaluate(self, e):
+        ground_truth = {i: [] for i in range(len(self.ground_comms.itervalues().next()))}
+        for tf, coms in self.ground_comms.iteritems():
+            for i, com in coms.iteritems():
+                for node in com:
+                    ground_truth[i].append(str(node)+"-t"+str(tf))
+        nmi = NMI(ground_truth, self.comms, evaluation_type="dynamic").results
+        print nmi
 
 
     def do_plot_graphs(self, node_size):

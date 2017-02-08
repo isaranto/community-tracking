@@ -24,18 +24,19 @@ class Muturank_new:
         self.node_pos = {node_id: i for i, node_id in enumerate(self.node_ids)}
         # self.a, self.o, self.r, self.sum_cols, self.sum_time = self.create_sptensors()
         print "Creating tensors a, o ,r..."
+        time1 = time.time()
         self.a, self.o, self.r, self.sum_cols, self.sum_time = self.create_sptensors(connection)
+        print "created tensors in  ", time.time()-time1, " seconds"
         self.e = threshold
         self.alpha = alpha
         self.beta = beta
         print "Running Muturank..."
-        time1 = time.time()
         self.run_muturank()
         print "Muturank ran in ", time.time()-time1, " seconds"
         print "Creating monorelational network..."
         self.w = self.create_monorelational()
         print "Performing clustering on monorelational network..."
-        self.clustering()
+        self.dynamic_com = self.clustering()
         """print sum(self.p_new)
         print sum(self.q_new)
         print(len(self.p_new))
@@ -43,6 +44,7 @@ class Muturank_new:
         # self.tensor= self.create_dense_tensors(graphs)
         # self.frame = self.create_dataframes(self.tensor)
         # self.check_probs()
+        print self.w.toarray()
         print self.q_new
 
     def create_adj_tensor(self, graphs):
@@ -79,7 +81,7 @@ class Muturank_new:
         a = {}
         for i, (t, graph) in enumerate(self.graphs.iteritems()):
             irr_graph = self.irr_components(graph)
-            # a[i] = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
+            #a[i] = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
             a[i] = sparse.eye(self.num_of_nodes*self.tfs, dtype=np.float64, format="dok")
             for u, v, d in irr_graph.edges_iter(data=True):
                 # add self edges for nodes that exist
@@ -94,17 +96,29 @@ class Muturank_new:
                     a[i][i*self.num_of_nodes + self.node_pos[v], i*self.num_of_nodes + self.node_pos[u]] = 1
 
         # add time edges
+        print "Adding time edges"
         a = self.add_time_edges(a, connection)
-        print "Adjacency tensor after adding time edges"
+        print "Making irreducible"
         # make irreducible again
-        a = self.irr_components_time(a)
+        # FIXME: creates a big bottlneck
+        #a = self.irr_components_time(a)
+        print "copying o,r from a"
+        # FIXME: deepcopy is too slow. try cpickle or json file
         o = deepcopy(a)
         r = deepcopy(a)
-        sum_cols = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.tfs), dtype=np.float64)
+        print "Creating o"
+        #sum_cols = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.tfs), dtype=np.float64)
+        sum_cols = sparse.lil_matrix((self.num_of_nodes*self.tfs, self.tfs), dtype=np.float64)
+        #sum_cols = {}
         for t in range(self.tfs):
+            sum_cols[:, t] = a[t].sum(axis=1)
             for j in range(self.num_of_nodes*self.tfs):
-                sum_cols[j, t] = a[t].sum(0)[0, j]
-                for i in range(j+1):
+                print "summing.."
+                # FIXME: column sum bottleneck
+                #sum_cols[j, t] = a[t].sum(0)[0, j]
+                #FIXME: matrix operation instead of for loop
+                o[t][:, j] = a[t][:, j]/sum_cols[j, t]
+                """for i in range(j+1):
                     if a[t][i, j] != 0:
                         try:
                             # o[t][j,i] = a[t][j, i]/np.sum(a[t][j, :])
@@ -113,8 +127,10 @@ class Muturank_new:
                                 # o[t][i, j] = a[t][i, j]/np.sum(a[t][i, :])
                                 o[t][j, i] = a[t][j, i]/sum_cols[i, t]
                         except ZeroDivisionError:
-                            pass
-        sum_time = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
+                            pass"""
+        print "Creating r"
+        #sum_time = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
+        sum_time = sparse.lil_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
         for i in range(self.num_of_nodes*self.tfs):
             for j in range(self.num_of_nodes*self.tfs):
                 for t in range(self.tfs):
@@ -337,6 +353,7 @@ class Muturank_new:
             except KeyError:
                 comms[c] = [str(self.node_ids[node])+"-t"+str(tf)]
         pprint.pprint(comms)
+        return comms
 
     def check_probs(self):
         if np.sum(self.p_new)!=1.0:
