@@ -34,9 +34,9 @@ class Muturank_new:
         self.run_muturank()
         print "Muturank ran in ", time.time()-time1, " seconds"
         print "Creating monorelational network..."
-        self.w = self.create_monorelational()
+        #self.w = self.create_monorelational()
         print "Performing clustering on monorelational network..."
-        self.dynamic_com = self.clustering()
+        #self.dynamic_com = self.clustering()
         """print sum(self.p_new)
         print sum(self.q_new)
         print(len(self.p_new))
@@ -44,8 +44,8 @@ class Muturank_new:
         # self.tensor= self.create_dense_tensors(graphs)
         # self.frame = self.create_dataframes(self.tensor)
         # self.check_probs()
-        print self.w.toarray()
-        print self.q_new
+        #print self.w.toarray()
+        #print self.q_new
 
     def create_adj_tensor(self, graphs):
         """
@@ -101,7 +101,7 @@ class Muturank_new:
         print "Making irreducible"
         # make irreducible again
         # FIXME: creates a big bottlneck
-        #a = self.irr_components_time(a)
+        a = self.irr_components_time(a)
         print "copying o,r from a"
         # FIXME: deepcopy is too slow. try cpickle or json file
         o = deepcopy(a)
@@ -113,7 +113,6 @@ class Muturank_new:
         for t in range(self.tfs):
             sum_cols[:, t] = a[t].sum(axis=1)
             for j in range(self.num_of_nodes*self.tfs):
-                print "summing.."
                 # FIXME: column sum bottleneck
                 #sum_cols[j, t] = a[t].sum(0)[0, j]
                 #FIXME: matrix operation instead of for loop
@@ -319,11 +318,11 @@ class Muturank_new:
             print sum([self.prob_t(d, j) for d in range(len(self.graphs))])"""
         return
 
-    def create_monorelational(self):
+    def create_monorelational(self, q):
         w = sparse.eye(self.num_of_nodes*self.tfs, dtype=np.float64, format="dok")
         for i in range(self.num_of_nodes*self.tfs):
             for j in range(self.num_of_nodes*self.tfs):
-                value = sum([self.q_new[d]*self.a[d][i, j] for d in range(self.tfs)])
+                value = sum([q[d]*self.a[d][i, j] for d in range(self.tfs)])
                 if value:
                     w[i, j] = value
         return w
@@ -430,6 +429,9 @@ if __name__ == '__main__':
     graphs = {}
     for i, edges in edges.items():
         graphs[i] = nx.Graph(edges)
-    mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one', clusters=3)
+    #mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one', clusters=3)
     # print mutu.a[mutu.node_pos[1],mutu.node_pos[4],1]
     # print mutu.r
+    mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one', clusters=3)
+    mutu.w = mutu.create_monorelational(mutu.q_new)
+    mutu.dynamic_com = mutu.clustering()

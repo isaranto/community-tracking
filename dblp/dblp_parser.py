@@ -6,7 +6,7 @@ import networkx as nx
 import pprint
 import pickle
 import time
-
+import numpy as np
 
 class dblp_parser:
     def __init__(self, json_file):
@@ -74,7 +74,8 @@ class dblp_parser:
 
 
 class dblp_loader:
-    def __init__(self, _file, start_year, end_year, conf_file='../data/dblp/confs.txt', coms='conf'):
+    def __init__(self, _file, start_year, end_year, conf_file='../data/dblp/confs.txt',
+                 coms='conf', new_file ='../data/dblp/dblp_filtered.json' ):
         with open(_file, 'r')as fp:
             # load json and convert year-keys to int
             self.data = {int(k): v for k, v in json.load(fp).items()}
@@ -89,7 +90,7 @@ class dblp_loader:
             self.communities = self.get_conf_com(start_year, end_year)
         else:
             self.communities, self.com_conf_map = self.get_cc_com()
-        #self.create_new_file(start_year, end_year)
+        #self.create_new_file(start_year, end_year, new_file)
 
     def get_edges(self, start_year, end_year):
         """
@@ -245,7 +246,7 @@ class dblp_loader:
                     confs.append(name)
         return length
 
-    def create_new_file(self, start_year, end_year):
+    def create_new_file(self, start_year, end_year, new_file):
         """
         exports a new json file, filtering the initial json with start-end years and conferences
         :param start_year:
@@ -261,7 +262,7 @@ class dblp_loader:
                         filtered_data[year][conf] = papers
         import os
         print os.path.dirname(os.path.realpath(__file__))
-        with open('../data/dblp/dblp_filtered.json', 'w')as fp:
+        with open(new_file, 'w')as fp:
             json.dump(filtered_data, fp, indent=2)
 
 if __name__ == '__main__':
@@ -295,7 +296,61 @@ if __name__ == '__main__':
                 except TypeError:
                     print conf, year
     for conf in conf_life.keys():
-        if len(conf_life[conf])<5:
+        if len(conf_life[conf]) < 5:
             conf_life.pop(conf, None)
-    with open("../data/dblp/conf_life_after1990.json", mode='w') as fp:
-        json.dump(conf_life, fp, indent=4)
+    print len(conf_life)
+    biennial = []
+    triennial = []
+    annual = []
+    for conf in conf_life.keys():
+        list = conf_life[conf]
+        #if np.std(np.diff(list)) > 0.5:
+        #    del conf_life[conf]
+        #if list[-1]-list[0] < 10:
+        #    del conf_life[conf]
+        #else:
+        diffs = np.diff(list)
+        if np.all(diffs==1):
+            annual.append(conf)
+        elif np.all(diffs==2):
+            biennial.append(conf)
+        elif np.all(diffs==3):
+            triennial.append(conf)
+        else:
+            del conf_life[conf]
+    print "annual", len(annual)
+    print "biennial", len(biennial)
+    print "triennial", len(triennial)
+    print "total", len(conf_life)
+    with open("../data/dblp/Mary/clean_confs.txt", "w") as fp:
+        for conf in conf_life.keys():
+            fp.write("%s\n" % conf)
+    with open("../data/dblp/Mary/annual_confs.txt", "w") as fp:
+        for conf in annual:
+            fp.write("%s\n" % conf)
+    with open("../data/dblp/Mary/biennial_confs.txt", "w") as fp:
+        for conf in biennial:
+            fp.write("%s\n" % conf)
+    with open("../data/dblp/Mary/conf_life_after_1990.json", 'w')as fp:
+            json.dump(conf_life, fp, indent=2)
+    #new_dblp = dblp_loader(_file = filename, start_year=1990, end_year=2016, conf_file =
+    # "../data/dblp/Mary/clean_confs.txt")
+    #new_dblp.create_new_file(start_year=1990, end_year=2016, new_file="../data/dblp/Mary/filtered.json")
+    filtered_data = {}
+    for year, conf_dict in dblp.data.iteritems():
+            if year in range(1990, 2016+1):
+                filtered_data[year]={}
+                for conf, papers in conf_dict.iteritems():
+                    if conf in conf_life.keys():
+                        filtered_data[year][conf] = papers
+    with open("../data/dblp/Mary/dblp_filtered_new.json", 'w') as fp:
+            for year, conferences in filtered_data.iteritems():
+                for conf_name, papers in conferences.iteritems():
+                    fp.write("{")
+                    record = '"year":"{0}", "conf_name": "{1}", "papers": {2}'.format(year, conf_name, papers)
+                    fp.write(record)
+                    fp.write("},\n")
+
+
+
+

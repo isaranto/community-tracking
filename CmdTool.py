@@ -57,8 +57,8 @@ class CmdTool(cmd.Cmd):
         :return:
         """
         if not filePath:
-            #filePath = "/home/lias/Dropbox/Msc/thesis/src/NEW/synthetic-data-generator/src/expand/"
-            filePath = "data/synthetic/expand"
+            filePath = "/home/lias/Dropbox/Msc/thesis/src/NEW/synthetic-data-generator/src/expand/"
+            #filePath = "data/synthetic/expand"
         sd = SyntheticDataConverter(filePath)
         self.graphs = sd.graphs
         self.ground_comms = sd.communities
@@ -122,6 +122,8 @@ class CmdTool(cmd.Cmd):
         threshold = 1e-6
         alpha = 0.85
         beta= 0.85
+        if not k:
+            k=len(self.ground_comms[0])
         mutu = Muturank_new(self.graphs, threshold, alpha, beta, connection, clusters=int(k))
         self.comms = mutu.dynamic_com
         return

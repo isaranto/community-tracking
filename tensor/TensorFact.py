@@ -15,6 +15,7 @@ class TensorFact:
         self.graphs = graphs
         self.add_self_edges()
         self.num_of_coms = num_of_coms
+        self.tfs_list = self.graphs.keys()
         self.node_ids = list(set([node for i in graphs for node in nx.nodes(graphs[i])]))
         # create a dict with {node_id : tensor_position} to be able to retrieve node_id
         self.node_pos = {node_id: i for i, node_id in enumerate(self.node_ids)}
@@ -25,10 +26,10 @@ class TensorFact:
         self.tensor = ktensor([A_org, B_org, C_org]).totensor()"""
         # self.tensor = self.create_dtensor(graphs)
         A, B, C = self.nnfact_repeat(seeds)
-        self.comms = self.get_comms(A, B, C)
+        self.dynamic_coms = self.get_comms(A, B, C)
         self. timeline = self.get_timeline(C)
         print "communities: ",
-        pprint.pprint(self.comms, indent=2, width=80)
+        pprint.pprint(self.dynamic_coms, indent=2, width=80)
         print "communities in timeframes: com:[tfi,tfj...]  ",
         pprint.pprint(self.timeline, indent=2, width=80)
         self.get_fact_info(A)
@@ -62,7 +63,7 @@ class TensorFact:
         s = len(graphs)
         tensor = np.zeros((n, n, s), dtype='float32')
         for i in range(s):
-            for u, v in graphs[i+1].edges_iter():
+            for u, v in graphs[i].edges_iter():
                 tensor[self.node_pos[u], self.node_pos[v], i] = 1
                 tensor[self.node_pos[v], self.node_pos[u], i] = 1
         return dtensor(tensor)
@@ -126,6 +127,8 @@ class TensorFact:
         return A, B, C, error
 
     def get_comms(self, A, B, C):
+        #FIXME : universal solution for communities
+
         """
         Return communities in a dict of the form { com_id : [list with node_ids that
         belong to the community}
@@ -139,10 +142,20 @@ class TensorFact:
             for c in range(A.shape[1]):
                 if A[u, c] > self.thres:
                     try:
-                        comms[c+1].append(self.node_ids[u])
+                        comms[c].append(self.node_ids[u])
                     except KeyError:
-                        comms[c+1] = [self.node_ids[u]]
-        return comms
+                        comms[c] = [self.node_ids[u]]
+        dynamic_coms ={}
+        for i, com in comms.iteritems():
+            for tf, G in self.graphs.iteritems():
+                for node in com:
+                    if G.has_node(node):
+                        try:
+                            dynamic_coms[i].append(str(node)+"-t"+str(tf))
+                        except KeyError:
+                            dynamic_coms[i] = [str(node)+"-t"+str(tf)]
+        return dynamic_coms
+
 
     def get_timeline(self, C):
         timeline = {}
@@ -190,5 +203,5 @@ if __name__ == '__main__':
     }
     graphs = {}
     for i, edges in edges.items():
-        graphs[i+1] = nx.Graph(edges)
+        graphs[i] = nx.Graph(edges)
     fact = TensorFact(graphs, num_of_coms=3, seeds=1, threshold=1e-4)
