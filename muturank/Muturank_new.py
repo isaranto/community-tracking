@@ -13,7 +13,7 @@ np.set_printoptions(precision=3, linewidth=300, formatter={'float_kind': '{:.5f}
 
 
 class Muturank_new:
-    def __init__(self, graphs, threshold, alpha, beta, connection, clusters):
+    def __init__(self, graphs, threshold, alpha, beta, connection, clusters, default_q = False):
         self.graphs = graphs
         self.node_ids = list(set([node for i in graphs for node in nx.nodes(graphs[i])]))
         self.num_of_nodes = len(self.node_ids)
@@ -30,13 +30,16 @@ class Muturank_new:
         self.e = threshold
         self.alpha = alpha
         self.beta = beta
-        print "Running Muturank..."
-        self.run_muturank()
-        print "Muturank ran in ", time.time()-time1, " seconds"
+        if default_q:
+            self.q_new = [1/self.tfs for i in range(self.tfs)]
+        else:
+            print "Running Muturank..."
+            self.run_muturank()
+            print "Muturank ran in ", time.time()-time1, " seconds"
         print "Creating monorelational network..."
-        #self.w = self.create_monorelational()
+        self.w = self.create_monorelational()
         print "Performing clustering on monorelational network..."
-        #self.dynamic_com = self.clustering()
+        self.dynamic_com = self.clustering()
         """print sum(self.p_new)
         print sum(self.q_new)
         print(len(self.p_new))
@@ -318,11 +321,11 @@ class Muturank_new:
             print sum([self.prob_t(d, j) for d in range(len(self.graphs))])"""
         return
 
-    def create_monorelational(self, q):
+    def create_monorelational(self):
         w = sparse.eye(self.num_of_nodes*self.tfs, dtype=np.float64, format="dok")
         for i in range(self.num_of_nodes*self.tfs):
             for j in range(self.num_of_nodes*self.tfs):
-                value = sum([q[d]*self.a[d][i, j] for d in range(self.tfs)])
+                value = sum([self.q_new[d]*self.a[d][i, j] for d in range(self.tfs)])
                 if value:
                     w[i, j] = value
         return w
@@ -432,6 +435,5 @@ if __name__ == '__main__':
     #mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one', clusters=3)
     # print mutu.a[mutu.node_pos[1],mutu.node_pos[4],1]
     # print mutu.r
-    mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one', clusters=3)
-    mutu.w = mutu.create_monorelational(mutu.q_new)
-    mutu.dynamic_com = mutu.clustering()
+    mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one', clusters=3, default_q=False)
+    print mutu.q_new
