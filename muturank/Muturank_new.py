@@ -50,6 +50,7 @@ class Muturank_new:
         #print self.w.toarray()
         #print self.q_new
 
+
     def create_adj_tensor(self, graphs):
         """
         This function is being used to convert a dictionary of graphs { timeframe# : networkx_graph}
@@ -70,7 +71,7 @@ class Muturank_new:
                 temp[i][u, v] = d['weight']
                 temp[i][v, u] = d['weight']
         return temp
-
+    @profile
     def create_sptensors(self, connection):
         """
             Create tensors A, O and R
@@ -107,20 +108,23 @@ class Muturank_new:
         a = self.irr_components_time(a)
         print "copying o,r from a"
         # FIXME: deepcopy is too slow. try cpickle or json file
-        o = deepcopy(a)
-        r = deepcopy(a)
+        #o = copy(a)
+        #r = copy(a)
         print "Creating o"
         #sum_cols = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.tfs), dtype=np.float64)
         sum_cols = sparse.lil_matrix((self.num_of_nodes*self.tfs, self.tfs), dtype=np.float64)
         #sum_cols = {}
+        from sklearn.preprocessing import normalize
+        o = { t: None for t in range(self.tfs)}
         for t in range(self.tfs):
+            o[t] = normalize(a[t], norm='l1', axis=0)
             sum_cols[:, t] = a[t].sum(axis=1)
-            for j in range(self.num_of_nodes*self.tfs):
+            """for j in range(self.num_of_nodes*self.tfs):
                 # FIXME: column sum bottleneck
                 #sum_cols[j, t] = a[t].sum(0)[0, j]
                 #FIXME: matrix operation instead of for loop
                 o[t][:, j] = a[t][:, j]/sum_cols[j, t]
-                """for i in range(j+1):
+                for i in range(j+1):
                     if a[t][i, j] != 0:
                         try:
                             # o[t][j,i] = a[t][j, i]/np.sum(a[t][j, :])
@@ -131,20 +135,17 @@ class Muturank_new:
                         except ZeroDivisionError:
                             pass"""
         print "Creating r"
-        #sum_time = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
         sum_time = sparse.lil_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
         for i in range(self.num_of_nodes*self.tfs):
             for j in range(self.num_of_nodes*self.tfs):
-                for t in range(self.tfs):
-                    if a[t][i, j] != 0:
-                        sum_time[i, j] += a[t][i, j]
+                sum_time[i, j] = sum([a[t][i, j] for t in range(self.tfs)])
+        r = {t: sparse.eye(self.num_of_nodes*self.tfs, dtype=np.float64, format="dok") for t in range(self.tfs)}
         for t in range(self.tfs):
-            for i in range(self.num_of_nodes*self.tfs):
-                for j in range(i+1):
-                    if a[t][j, i] != 0:
-                        r[t][j, i] = a[t][j, i]/sum_time[j, i]
-                        r[t][i, j] = a[t][i, j]/sum_time[i, j]
-        # print r[1].toarray()
+            array1,array2 = a[t].nonzero()
+            for index in range(len(array1)):
+                i = array1[index]
+                j = array2[index]
+                r[t][i, j] = a[t][i, j]/sum_time[i, j]
         return a, o, r, sum_cols, sum_time
 
     def add_time_edges(self, a, connection):
@@ -207,7 +208,8 @@ class Muturank_new:
 
         return a
 
-    def irr_components(self, graph):
+    @staticmethod
+    def irr_components(graph):
         """
         get connected components per timeframe and add an edge between them (with weight 0.0001)
 
@@ -244,8 +246,6 @@ class Muturank_new:
             graphs[t] = nx.Graph()
             graphs[t].add_weighted_edges_from(edges)
         return self.create_adj_tensor(graphs)
-
-
 
     def prob_t(self, d, j, denom):
         p = (self.q_old[d]*self.sum_cols[j, d])/denom
@@ -435,5 +435,7 @@ if __name__ == '__main__':
     #mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one', clusters=3)
     # print mutu.a[mutu.node_pos[1],mutu.node_pos[4],1]
     # print mutu.r
-    mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one', clusters=3, default_q=False)
+    import profile
+    mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one', clusters=3,
+                            default_q=False)
     print mutu.q_new
