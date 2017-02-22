@@ -71,6 +71,7 @@ class Muturank_new:
                 temp[i][u, v] = d['weight']
                 temp[i][v, u] = d['weight']
         return temp
+
     @profile
     def create_sptensors(self, connection):
         """
@@ -228,7 +229,7 @@ class Muturank_new:
             edges.append((nodes[i], nodes[i+1], 1e-4))
         graph.add_weighted_edges_from(edges)
         return graph
-
+    @profile
     def irr_components_time(self, a):
         """
 
@@ -236,16 +237,42 @@ class Muturank_new:
         :return:
         """
         random.seed(0)
-        graphs = {}
         for t in range(self.tfs):
-            edges = []
-            for i in range(a[t].shape[0]):
-                for j in range(a[t].shape[0]):
-                    if a[t][i, j] != 0:
-                        edges.append((i, j, a[t][i, j]))
-            graphs[t] = nx.Graph()
-            graphs[t].add_weighted_edges_from(edges)
-        return self.create_adj_tensor(graphs)
+            num, comps = sparse.csgraph.connected_components(a[t], directed=False)
+            if num == 1:
+                continue
+            else:
+                comp_dict = {i:[] for i in range(num)}
+                for i, c in enumerate(comps):
+                    comp_dict[c].append(i)
+                nodes = []
+                for comps in comp_dict.values():
+                    nodes.append(random.choice(list(comps)))
+                if t==0:
+                    print nodes
+                for i in range(len(nodes)-1):
+                    a[t][nodes[i], nodes[i+1]] = 1e-4
+                    a[t][nodes[i+1], nodes[i]] = 1e-4
+        return a
+
+    # def irr_components_time(self, a):
+    #     """
+    #
+    #     :param a:
+    #     :return:
+    #     """
+    #
+    #     random.seed(0)
+    #     graphs = {}
+    #     for t in range(self.tfs):
+    #         edges = []
+    #         for i in range(a[t].shape[0]):
+    #             for j in range(a[t].shape[0]):
+    #                 if a[t][i, j] != 0:
+    #                     edges.append((i, j, a[t][i, j]))
+    #         graphs[t] = nx.Graph()
+    #         graphs[t].add_weighted_edges_from(edges)
+    #     return self.create_adj_tensor(graphs)
 
     def prob_t(self, d, j, denom):
         p = (self.q_old[d]*self.sum_cols[j, d])/denom
