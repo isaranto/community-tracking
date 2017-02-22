@@ -72,7 +72,7 @@ class Muturank_new:
                 temp[i][v, u] = d['weight']
         return temp
 
-    @profile
+
     def create_sptensors(self, connection):
         """
             Create tensors A, O and R
@@ -229,7 +229,7 @@ class Muturank_new:
             edges.append((nodes[i], nodes[i+1], 1e-4))
         graph.add_weighted_edges_from(edges)
         return graph
-    @profile
+
     def irr_components_time(self, a):
         """
 
