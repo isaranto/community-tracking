@@ -48,7 +48,7 @@ class Muturank_new:
         # self.frame = self.create_dataframes(self.tensor)
         # self.check_probs()
         #print self.w.toarray()
-        #print self.q_new
+        print self.q_new
 
 
     def create_adj_tensor(self, graphs):
@@ -72,7 +72,7 @@ class Muturank_new:
                 temp[i][v, u] = d['weight']
         return temp
 
-
+    
     def create_sptensors(self, connection):
         """
             Create tensors A, O and R
@@ -102,21 +102,21 @@ class Muturank_new:
 
         # add time edges
         print "Adding time edges"
+        print a[0].toarray()
         a = self.add_time_edges(a, connection)
+        print ""
+        print ""
+        print ""
+        print a[0].toarray()
         print "Making irreducible"
         # make irreducible again
-        # FIXME: creates a big bottlneck
         a = self.irr_components_time(a)
-        print "copying o,r from a"
-        # FIXME: deepcopy is too slow. try cpickle or json file
-        #o = copy(a)
-        #r = copy(a)
         print "Creating o"
-        #sum_cols = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.tfs), dtype=np.float64)
+        # sum_cols = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.tfs), dtype=np.float64)
         sum_cols = sparse.lil_matrix((self.num_of_nodes*self.tfs, self.tfs), dtype=np.float64)
-        #sum_cols = {}
+        # sum_cols = {}
         from sklearn.preprocessing import normalize
-        o = { t: None for t in range(self.tfs)}
+        o = {t: None for t in range(self.tfs)}
         for t in range(self.tfs):
             o[t] = normalize(a[t], norm='l1', axis=0)
             sum_cols[:, t] = a[t].sum(axis=1)
@@ -136,11 +136,15 @@ class Muturank_new:
                         except ZeroDivisionError:
                             pass"""
         print "Creating r"
+        # FIXME: big bottleneck creating R tensor
         sum_time = sparse.lil_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
-        for i in range(self.num_of_nodes*self.tfs):
-            for j in range(self.num_of_nodes*self.tfs):
-                sum_time[i, j] = sum([a[t][i, j] for t in range(self.tfs)])
+        # for i in range(self.num_of_nodes*self.tfs):
+        #     for j in range(self.num_of_nodes*self.tfs):
+        #         sum_time[i, j] = sum([a[t][i, j] for t in range(self.tfs)])
         r = {t: sparse.eye(self.num_of_nodes*self.tfs, dtype=np.float64, format="dok") for t in range(self.tfs)}
+        for tf in range(self.tfs):
+            #sum_time2 = (sum_time.tocsr() + a[tf].tocsr()).tolil()
+            sum_time += a[tf]
         for t in range(self.tfs):
             array1,array2 = a[t].nonzero()
             for index in range(len(array1)):
@@ -195,6 +199,30 @@ class Muturank_new:
                     except IndexError:
                         pass
         # TODO: correctly connect all node-timeframes
+        elif connection == 'all':
+            # connect only all timeframes
+            for t in range(self.tfs):
+                for i in range(a[t].shape[0]):
+                    try:
+                        # always check if the nodes exist in the timeframe
+                        # if they do, add an edge, else add a weak edge
+                        # in order to achieve irreducibility
+                        tf = i // self.num_of_nodes
+                        node = i % self.num_of_nodes
+                        if self.graphs[self.tfs_list[tf]].has_node(self.node_ids[node]):
+                            this = True
+                        else:
+                            this = False
+                        if i < self.num_of_nodes:
+                            for d in range(1, self.tfs):
+                                if this and self.has_node(d, node):
+                                    a[t][i, i + self.num_of_nodes*d] = 1
+                                    a[t][i + self.num_of_nodes*d, i] = 1
+                                else:
+                                    a[t][i, i + self.num_of_nodes*d] = 1e-4
+                                    a[t][i + self.num_of_nodes*d, i] = 1e-4
+                    except IndexError:
+                        pass
         """if connection == 'all':
             # connect only with previous and next timeframe
             for t in range(self.tfs):
@@ -248,8 +276,6 @@ class Muturank_new:
                 nodes = []
                 for comps in comp_dict.values():
                     nodes.append(random.choice(list(comps)))
-                if t==0:
-                    print nodes
                 for i in range(len(nodes)-1):
                     a[t][nodes[i], nodes[i+1]] = 1e-4
                     a[t][nodes[i+1], nodes[i]] = 1e-4
@@ -450,10 +476,15 @@ if __name__ == '__main__':
     2: [(1, 2), (5, 6), (5, 8)]
     }
     """
+    # edges = {
+    #     0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
+    #     1: [(11, 12), (11, 13), (12, 13),(1, 2), (1, 3), (1, 4), (3, 4)],
+    #     2: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)]
+    # }
     edges = {
-        0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
-        1: [(11, 12), (11, 13), (12, 13)],
-        2: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)]
+        0: [(1,1), (2,2), (3,3)],
+        1: [(1,1), (2,2), (3,3)],
+        2: [(1,1), (2,2), (3,3)]
     }
 
     graphs = {}
@@ -463,6 +494,6 @@ if __name__ == '__main__':
     # print mutu.a[mutu.node_pos[1],mutu.node_pos[4],1]
     # print mutu.r
     import profile
-    mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one', clusters=3,
+    mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='all', clusters=3,
                             default_q=False)
     print mutu.q_new
