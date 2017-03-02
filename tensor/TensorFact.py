@@ -174,6 +174,7 @@ class TensorFact:
             for j in range(i):
                 if sum([self.tensor[i, j, t] for t in range(len(self.graphs))]):
                     agg[i, j] = 1
+                    agg[j, i] = 1
         return agg
 
     def get_Finit(self, seed):
@@ -205,3 +206,7 @@ if __name__ == '__main__':
     for i, edges in edges.items():
         graphs[i] = nx.Graph(edges)
     fact = TensorFact(graphs, num_of_coms=3, seeds=1, threshold=1e-4)
+    from metrics import Omega
+    print Omega(fact.dynamic_coms, fact.dynamic_coms).omega_score
+    from metrics import NMI
+    print NMI(fact.dynamic_coms, fact.dynamic_coms).results

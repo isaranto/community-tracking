@@ -13,7 +13,10 @@ np.set_printoptions(precision=3, linewidth=300, formatter={'float_kind': '{:.5f}
 
 
 class Muturank_new:
-    def __init__(self, graphs, threshold, alpha, beta, connection, clusters, default_q = False):
+    #@profile
+    def __init__(self, graphs, threshold, alpha, beta, connection, clusters, default_q=False, random_state=0):
+        self.random_state = random_state
+        random.seed(self.random_state)
         self.graphs = graphs
         self.node_ids = list(set([node for i in graphs for node in nx.nodes(graphs[i])]))
         self.num_of_nodes = len(self.node_ids)
@@ -33,22 +36,25 @@ class Muturank_new:
         if default_q:
             self.q_new = [1/self.tfs for i in range(self.tfs)]
         else:
+            time1 = time.time()
             print "Running Muturank..."
             self.run_muturank()
             print "Muturank ran in ", time.time()-time1, " seconds"
         print "Creating monorelational network..."
+        time1 = time.time()
         self.w = self.create_monorelational()
+        print "Created monorelational in ", time.time()-time1, " seconds"
         print "Performing clustering on monorelational network..."
+        time1 = time.time()
         self.dynamic_com = self.clustering()
+        print "Performed clustering in ", time.time()-time1, " seconds"
         """print sum(self.p_new)
         print sum(self.q_new)
         print(len(self.p_new))
         print(len(self.q_new))"""
-        # self.tensor= self.create_dense_tensors(graphs)
-        # self.frame = self.create_dataframes(self.tensor)
         # self.check_probs()
-        #print self.w.toarray()
-        print self.q_new
+        # print self.w.toarray()
+        # print self.q_new
 
 
     def create_adj_tensor(self, graphs):
@@ -72,7 +78,7 @@ class Muturank_new:
                 temp[i][v, u] = d['weight']
         return temp
 
-    
+
     def create_sptensors(self, connection):
         """
             Create tensors A, O and R
@@ -136,7 +142,6 @@ class Muturank_new:
                         except ZeroDivisionError:
                             pass"""
         print "Creating r"
-        # FIXME: big bottleneck creating R tensor
         sum_time = sparse.lil_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
         # for i in range(self.num_of_nodes*self.tfs):
         #     for j in range(self.num_of_nodes*self.tfs):
@@ -146,7 +151,7 @@ class Muturank_new:
             #sum_time2 = (sum_time.tocsr() + a[tf].tocsr()).tolil()
             sum_time += a[tf]
         for t in range(self.tfs):
-            array1,array2 = a[t].nonzero()
+            array1, array2 = a[t].nonzero()
             for index in range(len(array1)):
                 i = array1[index]
                 j = array2[index]
@@ -198,7 +203,7 @@ class Muturank_new:
                                 a[t][i - self.num_of_nodes, i] = 1e-4
                     except IndexError:
                         pass
-        # TODO: correctly connect all node-timeframes
+        # FIXME: correctly connect all node-timeframes
         elif connection == 'all':
             # connect only all timeframes
             for t in range(self.tfs):
@@ -213,14 +218,13 @@ class Muturank_new:
                             this = True
                         else:
                             this = False
-                        if i < self.num_of_nodes:
-                            for d in range(1, self.tfs):
-                                if this and self.has_node(d, node):
-                                    a[t][i, i + self.num_of_nodes*d] = 1
-                                    a[t][i + self.num_of_nodes*d, i] = 1
-                                else:
-                                    a[t][i, i + self.num_of_nodes*d] = 1e-4
-                                    a[t][i + self.num_of_nodes*d, i] = 1e-4
+                        for d in range(1, self.tfs):
+                            if self.has_node(t, node) and self.has_node(d, node):
+                                a[t][i, i + self.num_of_nodes*d] = 1
+                                a[t][i + self.num_of_nodes*d, i] = 1
+                            else:
+                                a[t][i, i + self.num_of_nodes*d] = 1e-4
+                                a[t][i + self.num_of_nodes*d, i] = 1e-4
                     except IndexError:
                         pass
         """if connection == 'all':
@@ -237,18 +241,18 @@ class Muturank_new:
 
         return a
 
-    @staticmethod
-    def irr_components(graph):
+    # @staticmethod
+    def irr_components(self, graph):
         """
         get connected components per timeframe and add an edge between them (with weight 0.0001)
 
         :param graph:
         :return: the irreducible graph for this timeframe
         """
-        # setting a standard seed to get deterministic behavior
-        random.seed(0)
         """for u, v, d in graph.edges(data=True):
             d['weight'] = 1"""
+
+        random.seed(self.random_state)
         nodes = []
         for comps in nx.connected_components(graph):
             nodes.append(random.choice(list(comps)))
@@ -264,13 +268,13 @@ class Muturank_new:
         :param a:
         :return:
         """
-        random.seed(0)
+        random.seed(self.random_state)
         for t in range(self.tfs):
             num, comps = sparse.csgraph.connected_components(a[t], directed=False)
             if num == 1:
                 continue
             else:
-                comp_dict = {i:[] for i in range(num)}
+                comp_dict = {i: [] for i in range(num)}
                 for i, c in enumerate(comps):
                     comp_dict[c].append(i)
                 nodes = []
@@ -288,7 +292,6 @@ class Muturank_new:
     #     :return:
     #     """
     #
-    #     random.seed(0)
     #     graphs = {}
     #     for t in range(self.tfs):
     #         edges = []
@@ -299,17 +302,19 @@ class Muturank_new:
     #         graphs[t] = nx.Graph()
     #         graphs[t].add_weighted_edges_from(edges)
     #     return self.create_adj_tensor(graphs)
-
+    #@profile
     def prob_t(self, d, j, denom):
         p = (self.q_old[d]*self.sum_cols[j, d])/denom
         # np.sum([self.q_old[m]*self.a[m][j, l] for l in range(self.num_of_nodes*self.tfs) for m in range(self.tfs)])
         return p
 
+    #@profile
     def prob_n(self, i, j, denom):
         p = np.sum([self.q_old[m]*self.a[m][j, i] for m in range(self.tfs)])/denom
         # np.sum([self.q_old[m]*self.a[m][j, l] for l in range(self.num_of_nodes*self.tfs) for m in range(self.tfs)])
         return p
 
+    #@profile
     def run_muturank(self):
         """
         Input:
@@ -346,16 +351,26 @@ class Muturank_new:
             self.p_old = copy(self.p_new)
             self.q_old = copy(self.q_new)
             # calculate prob denominators once
-            denom = np.zeros(self.num_of_nodes*self.tfs)
+            denom = np.zeros(self.num_of_nodes*self.tfs, dtype=np.float64)
+            # for i in range(self.num_of_nodes*self.tfs):
+            #     denom[i] = np.sum([self.q_old[m]*self.a[m][i, l]
+            #                       for l in range(self.num_of_nodes*self.tfs)
+            #                       for m in range(self.tfs)])
+            q_a = {}
             for i in range(self.num_of_nodes*self.tfs):
-                denom[i] = np.sum([self.q_old[m]*self.a[m][i, l]
-                                  for l in range(self.num_of_nodes*self.tfs)
-                                  for m in range(self.tfs)])
+                denom[i] = np.sum([np.sum(self.q_old[m]*self.a[m][i, :]) for m in range(self.tfs)])
+            prob_t = np.zeros((self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
+            proba_t = sparse.lil_matrix((self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
+            for j in range(proba_t.shape[1]):
+                for d in range(self.tfs):
+                    prob_t[d, j] = self.prob_t(d, j, denom[j])
             for i in range(self.num_of_nodes*self.tfs):
-                self.p_new[i] = self.alpha *\
-                               np.sum([self.p_old[j]*self.o[d][i, j]*self.prob_t(d, j, denom[j])
-                                      for j in range(self.num_of_nodes*self.tfs)
-                                      for d in range(self.tfs)])+(1-self.alpha)*p_star[i]
+                first = np.sum(self.p_old[j]*self.o[d][i, :]*proba_t[d, :].T)
+                self.p_new[i] = self.alpha *first + (1-self.alpha)*p_star[i]
+                # self.p_new[i] = self.alpha *\
+                #                np.sum([self.p_old[j]*self.o[d][i, j]*self.prob_t(d, j, denom[j])
+                #                       for j in range(self.num_of_nodes*self.tfs)
+                #                       for d in range(self.tfs)])+(1-self.alpha)*p_star[i]
             for d in range(self.tfs):
                 self.q_new[d] = self.beta *\
                                 np.sum([self.p_old[j]*self.r[d][i, j]*self.prob_n(i, j, denom[j])
@@ -365,27 +380,29 @@ class Muturank_new:
             self.p_new = self.p_new/np.sum(self.p_new)
             self.q_new = self.q_new/np.sum(self.q_new)
             t += 1
-            # self.check_probs()
-        """checking the calculation of probabilities
-        for j in range(len(self.node_ids)):
-            print sum([self.prob_n(i, j) for i in range(len(self.node_ids))])
-
-        for j in range(len(self.node_ids)):
-            print sum([self.prob_t(d, j) for d in range(len(self.graphs))])"""
+            #self.check_probs()
+        #checking the calculation of probabilities
+        # for j in range(len(self.node_ids)):
+        #     print sum([self.prob_n(i, j, denom[j]) for i in range(len(self.node_ids))])
+        #
+        # for j in range(len(self.node_ids)):
+        #     print sum([self.prob_t(d, j, denom[j]) for d in range(len(self.graphs))])
         return
 
+    #@profile
     def create_monorelational(self):
-        w = sparse.eye(self.num_of_nodes*self.tfs, dtype=np.float64, format="dok")
-        for i in range(self.num_of_nodes*self.tfs):
-            for j in range(self.num_of_nodes*self.tfs):
-                value = sum([self.q_new[d]*self.a[d][i, j] for d in range(self.tfs)])
-                if value:
-                    w[i, j] = value
+        w = sparse.lil_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
+        for d in range(self.tfs):
+            w += self.q_new[d]*self.a[d]
         return w
 
     def clustering(self):
+        print "running spectral"
         # TODO: how to obtain # of communities
-        clusters = spectral_clustering(self.w, n_clusters=self.clusters, n_init=10, eigen_solver='arpack')
+
+        clusters = spectral_clustering(self.w, n_clusters=self.clusters,
+                                       random_state=self.random_state, eigen_tol=0)
+        #clusters = k_means(self.w, n_clusters=self.clusters, n_init=10)
         """com_time = {}
         for t in range(self.tfs):
             comms = {}
@@ -396,8 +413,9 @@ class Muturank_new:
                     comms[clusters[node + t*self.num_of_nodes]]= [self.node_ids[node]]
                 #print self.node_ids[node], clusters[node + t*self.num_of_nodes]
             com_time[t] = comms"""
+        print "saving communities"
         comms = {}
-        com_time ={}
+        com_time = {}
         for n, c in enumerate(clusters):
             try:
                 tf = n // self.num_of_nodes
@@ -476,16 +494,16 @@ if __name__ == '__main__':
     2: [(1, 2), (5, 6), (5, 8)]
     }
     """
-    # edges = {
-    #     0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
-    #     1: [(11, 12), (11, 13), (12, 13),(1, 2), (1, 3), (1, 4), (3, 4)],
-    #     2: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)]
-    # }
     edges = {
-        0: [(1,1), (2,2), (3,3)],
-        1: [(1,1), (2,2), (3,3)],
-        2: [(1,1), (2,2), (3,3)]
+        0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
+        1: [(11, 12), (11, 13), (12, 13)],
+        2: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)]
     }
+    # edges = {
+    #     0: [(1,1), (2,2), (3,3)],
+    #     1: [(1,1), (2,2), (3,3)],
+    #     2: [(1,1), (2,2), (3,3)]
+    # }
 
     graphs = {}
     for i, edges in edges.items():
@@ -493,7 +511,6 @@ if __name__ == '__main__':
     #mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one', clusters=3)
     # print mutu.a[mutu.node_pos[1],mutu.node_pos[4],1]
     # print mutu.r
-    import profile
-    mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='all', clusters=3,
+    mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one', clusters=3,
                             default_q=False)
     print mutu.q_new
