@@ -6,6 +6,7 @@ from sktensor import sptensor
 from copy import deepcopy, copy
 from scipy import sparse
 from sklearn.cluster import spectral_clustering
+from sklearn.preprocessing import normalize
 import time
 import pprint
 import random
@@ -52,11 +53,11 @@ class Muturank_new:
         print sum(self.q_new)
         print(len(self.p_new))
         print(len(self.q_new))"""
-        # self.check_probs()
+        #self.check_probs()
         # print self.w.toarray()
         # print self.q_new
 
-
+    #@profile
     def create_adj_tensor(self, graphs):
         """
         This function is being used to convert a dictionary of graphs { timeframe# : networkx_graph}
@@ -78,7 +79,7 @@ class Muturank_new:
                 temp[i][v, u] = d['weight']
         return temp
 
-
+    #@profile
     def create_sptensors(self, connection):
         """
             Create tensors A, O and R
@@ -106,25 +107,35 @@ class Muturank_new:
                     a[i][i*self.num_of_nodes + self.node_pos[u], i*self.num_of_nodes + self.node_pos[v]] = 1
                     a[i][i*self.num_of_nodes + self.node_pos[v], i*self.num_of_nodes + self.node_pos[u]] = 1
 
-        # add time edges
+        # add time edgesm
         print "Adding time edges"
-        print a[0].toarray()
         a = self.add_time_edges(a, connection)
-        print ""
-        print ""
-        print ""
-        print a[0].toarray()
         print "Making irreducible"
         # make irreducible again
         a = self.irr_components_time(a)
+        # TODO: correct a_i and o_i
+
+        from scipy.sparse import hstack
+        # self.a_i = {i: sparse.lil_matrix((self.num_of_nodes*self.tfs , self.tfs), dtype=np.float64)
+        #        for i in range(self.num_of_nodes*self.tfs)}
+        self.a_i = {i: hstack(tuple(a[t][i, :].T for t in range(self.tfs)),format='csr')
+               for i in range(self.num_of_nodes*self.tfs) }
+        # for i in range(self.num_of_nodes*self.tfs):
+        #     for j in range(self.num_of_nodes*self.tfs):
+        #         for d in range(self.tfs):
+        #             self.a_i[i][j, d] = a[d][i, j]
+        self.o_i = {i: sparse.csr_matrix((self.num_of_nodes*self.tfs, self.tfs), dtype=np.float64) for i in range(
+            self.num_of_nodes*self.tfs)}
+        for i in range(self.num_of_nodes*self.tfs):
+            self.o_i[i] = hstack(tuple(normalize(self.a_i[i][:, [t]], norm='l1', axis=0) for t in range(self.tfs)),
+                                 format='csr')
         print "Creating o"
         # sum_cols = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.tfs), dtype=np.float64)
         sum_cols = sparse.lil_matrix((self.num_of_nodes*self.tfs, self.tfs), dtype=np.float64)
         # sum_cols = {}
-        from sklearn.preprocessing import normalize
         o = {t: None for t in range(self.tfs)}
         for t in range(self.tfs):
-            o[t] = normalize(a[t], norm='l1', axis=0)
+            o[t] = normalize(a[t], norm='l1', axis=1)
             sum_cols[:, t] = a[t].sum(axis=1)
             """for j in range(self.num_of_nodes*self.tfs):
                 # FIXME: column sum bottleneck
@@ -203,7 +214,6 @@ class Muturank_new:
                                 a[t][i - self.num_of_nodes, i] = 1e-4
                     except IndexError:
                         pass
-        # FIXME: correctly connect all node-timeframes
         elif connection == 'all':
             # connect only all timeframes
             for t in range(self.tfs):
@@ -227,18 +237,6 @@ class Muturank_new:
                                 a[t][i + self.num_of_nodes*d, i] = 1e-4
                     except IndexError:
                         pass
-        """if connection == 'all':
-            # connect only with previous and next timeframe
-            for t in range(self.tfs):
-                for i in range(a[t].shape[0]):
-                    for m in range(self.tfs):
-                        for n in range(self.tfs):
-                            try:
-                                a[t][i+self.num_of_nodes*m, i+self.num_of_nodes*n] = 1
-                                a[t][i+self.num_of_nodes*n, i+self.num_of_nodes*m] = 1
-                            except IndexError:
-                                pass"""
-
         return a
 
     # @staticmethod
@@ -310,7 +308,8 @@ class Muturank_new:
 
     #@profile
     def prob_n(self, i, j, denom):
-        p = np.sum([self.q_old[m]*self.a[m][j, i] for m in range(self.tfs)])/denom
+        #p = np.sum([self.q_old[m]*self.a[m][j, i] for m in range(self.tfs)])/denom
+        p = (self.a_i[j][i, :].dot(self.q_old)).sum()/denom
         # np.sum([self.q_old[m]*self.a[m][j, l] for l in range(self.num_of_nodes*self.tfs) for m in range(self.tfs)])
         return p
 
@@ -332,9 +331,6 @@ class Muturank_new:
         # p_new
 
         # initializing p_star and q_star with random probabilities
-        # TODO: p* and q* should be 1/N and 1/m (the same goes for p0 and q0
-        # p_star = np.random.dirichlet(np.ones(len(self.node_ids)))
-        # q_star = np.random.dirichlet(np.ones(len(self.graphs)))
         # p_star = [1/(self.num_of_nodes*self.tfs) for _ in range(self.num_of_nodes*self.tfs)]
         # q_star = [1/self.tfs for _ in range(self.tfs)]
         p_star = np.repeat(1/(self.num_of_nodes*self.tfs), self.num_of_nodes*self.tfs)
@@ -352,30 +348,43 @@ class Muturank_new:
             self.q_old = copy(self.q_new)
             # calculate prob denominators once
             denom = np.zeros(self.num_of_nodes*self.tfs, dtype=np.float64)
-            # for i in range(self.num_of_nodes*self.tfs):
-            #     denom[i] = np.sum([self.q_old[m]*self.a[m][i, l]
-            #                       for l in range(self.num_of_nodes*self.tfs)
-            #                       for m in range(self.tfs)])
-            q_a = {}
             for i in range(self.num_of_nodes*self.tfs):
-                denom[i] = np.sum([np.sum(self.q_old[m]*self.a[m][i, :]) for m in range(self.tfs)])
-            prob_t = np.zeros((self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
-            proba_t = sparse.lil_matrix((self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
+                denom[i]=self.a_i[i].dot(self.q_old).sum()
+            #prob_t = np.zeros((self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
+            proba_t = sparse.csr_matrix((self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
             for j in range(proba_t.shape[1]):
                 for d in range(self.tfs):
-                    prob_t[d, j] = self.prob_t(d, j, denom[j])
+                    proba_t[d, j] = self.prob_t(d, j, denom[j])
+            proba_n = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
+            # for i in range(self.num_of_nodes*self.tfs):
+            #     for j in range(i+1):
+            #         if i==j:
+            #             proba_n[i, j] = self.prob_n(i, j, denom[j])
+            #             continue
+            #         proba_n[i, j] = self.prob_n(i, j, denom[j])
+            #         proba_n[j, i] = proba_n[i, j]
             for i in range(self.num_of_nodes*self.tfs):
-                first = np.sum(self.p_old[j]*self.o[d][i, :]*proba_t[d, :].T)
-                self.p_new[i] = self.alpha *first + (1-self.alpha)*p_star[i]
-                # self.p_new[i] = self.alpha *\
-                #                np.sum([self.p_old[j]*self.o[d][i, j]*self.prob_t(d, j, denom[j])
-                #                       for j in range(self.num_of_nodes*self.tfs)
-                #                       for d in range(self.tfs)])+(1-self.alpha)*p_star[i]
+                for i in range(self.num_of_nodes*self.tfs):
+                    proba_n[i, j] = self.prob_n(i, j, denom[j])
+            for i in range(self.num_of_nodes*self.tfs):
+                first = (sparse.csr_matrix(self.p_old.T).dot(self.o_i[i])).dot(proba_t).sum()
+                self.p_new[i] = self.alpha * first + (1-self.alpha)*p_star[i]
+            #     self.p_new[i] = self.alpha *\
+            #                    np.sum([self.p_old[j]*self.o[d][i, j]*self.prob_t(d, j, denom[j])
+            #                           for j in range(self.num_of_nodes*self.tfs)
+            #                           for d in range(self.tfs)])+(1-self.alpha)*p_star[i]
+            # for i in range(self.num_of_nodes*self.tfs):
+            #     if self.p_new[i] != my_new[i]:
+            #         print "SHIIIT", self.p_new[i], my_new[i]
             for d in range(self.tfs):
-                self.q_new[d] = self.beta *\
-                                np.sum([self.p_old[j]*self.r[d][i, j]*self.prob_n(i, j, denom[j])
-                                       for i in range(self.num_of_nodes*self.tfs)
-                                       for j in range(self.num_of_nodes*self.tfs)])+(1-self.beta)*q_star[d]
+                self.q_new[d] = self.beta*(sparse.csr_matrix(self.p_old.T).dot(self.r[d]).dot(
+                    proba_n)).sum()+(1-self.beta)*q_star[d]
+            # for d in range(self.tfs):
+            #     self.q_new[d] = self.beta *\
+            #                     np.sum([self.p_old[j]*self.r[d][i, j]*self.prob_n(i, j, denom[j])
+            #                            for i in range(self.num_of_nodes*self.tfs)
+            #                            for j in range(self.num_of_nodes*self.tfs)])+(1-self.beta)*q_star[d]
+
             # divide each element with the sum of the distribution in order to reduce the error
             self.p_new = self.p_new/np.sum(self.p_new)
             self.q_new = self.q_new/np.sum(self.q_new)
@@ -391,11 +400,11 @@ class Muturank_new:
 
     #@profile
     def create_monorelational(self):
-        w = sparse.lil_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
+        w = sparse.csr_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
         for d in range(self.tfs):
             w += self.q_new[d]*self.a[d]
         return w
-
+    #@profile
     def clustering(self):
         print "running spectral"
         # TODO: how to obtain # of communities
@@ -511,6 +520,9 @@ if __name__ == '__main__':
     #mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one', clusters=3)
     # print mutu.a[mutu.node_pos[1],mutu.node_pos[4],1]
     # print mutu.r
-    mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one', clusters=3,
+    mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='all', clusters=3,
                             default_q=False)
     print mutu.q_new
+    # def sparsity_ratio(X):
+    #     return 1.0 - len(X.nonzero()[0]) / float(X.shape[0] * X.shape[1])
+    # print("input sparsity ratio:", sparsity_ratio(mutu.w))
