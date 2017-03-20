@@ -22,7 +22,7 @@ class SyntheticDataConverter:
         self.timeline_file = [item for item in sorted(files) if item.endswith('timeline')]
         self.timeFrames = len(self.edges_files)
         self.edges = self.get_edges()
-        self.communities = self.get_comms()
+        self.comms = self.get_comms()
         self.events = self.get_events()
         self.graphs = {}
         for i in range(self.timeFrames):

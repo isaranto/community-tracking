@@ -3,7 +3,7 @@ import json
 
 
 class GedWrite:
-    def __init__(self, data, fileName):
+    def __init__(self, data, fileName='./data/temp_ged_communities.json'):
         self.fileName = fileName
         self.graphs= data.graphs
         self.comms = data.comms
@@ -11,8 +11,8 @@ class GedWrite:
         if isinstance(data.timeFrames, list):
             self.timeFrames = data.timeFrames
         else:
-            self.timeFrames = range(1, data.timeFrames+1)
-        self.type = data.type
+            self.timeFrames = range(data.timeFrames)
+        #self.type = data.type
         self.write_data()
 
     def write_data(self):
@@ -27,9 +27,9 @@ class GedWrite:
                 for u, v in combinations_with_replacement(comm, 2):
                     # if an edge exists add it to the community edges
                     if self.graphs[tf].get_edge_data(u, v) is not None:
-                        if not u==v:
+                        if not u == v:
                             edges.append([u, v])
                 communities.append(edges)
             output["windows"].append({"communities": communities})
-        with open("./data/"+self.fileName, 'w') as f:
+        with open(self.fileName, 'w') as f:
             json.dump(output, f, indent=2)

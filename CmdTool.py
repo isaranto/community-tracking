@@ -61,7 +61,7 @@ class CmdTool(cmd.Cmd):
             #filePath = "data/synthetic/expand"
         sd = SyntheticDataConverter(filePath)
         self.graphs = sd.graphs
-        self.ground_comms = sd.communities
+        self.ground_comms = sd.comms
         self.timeFrames = sd.timeFrames
         self.timeline = sd.get_timeline()
         self.type = sd.type

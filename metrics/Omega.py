@@ -2,21 +2,21 @@ from __future__ import division
 from itertools import combinations
 from collections import Counter
 
+
 class Omega:
     def __init__(self, comms1, comms2):
         self.nodes1 = self.get_node_assignment(comms1)
         self.nodes2 = self.get_node_assignment(comms2)
         self.nodes = list(set().union([node for i, com in comms2.iteritems() for node in com],
                                       [node for i, com in comms1.iteritems() for node in com]))
-        J,K,N,obs,tuples1,tuples2 = self.observed()
-        exp = self.expected(J,K,N,tuples1,tuples2)
+        J, K, N, obs, tuples1, tuples2 = self.observed()
+        exp = self.expected(J, K, N, tuples1, tuples2)
         self.omega_score = self.calc_omega(obs, exp)
-        print "obs = ", obs
-        print "exp = ", exp
-        print "Omega = ", self.omega_score
+        # print "obs = ", obs
+        # print "exp = ", exp
+        # print "Omega = ", self.omega_score
 
-
-    def get_node_assignment(self,comms):
+    def get_node_assignment(self, comms):
         """
         returns a dictionary with node-cluster assignments of the form {node_id :[cluster1, cluster_3]}
         :param comms:
@@ -40,10 +40,10 @@ class Omega:
         :return:
         """
         try:
-            sum = len(set(nodes_dict[u]) & set(nodes_dict[v]))
+            _sum = len(set(nodes_dict[u]) & set(nodes_dict[v]))
         except KeyError:
-            sum = 0
-        return sum
+            _sum = 0
+        return _sum
 
     def observed(self):
         N = 0
@@ -84,4 +84,11 @@ if __name__ == '__main__':
     comms1 = {1: [5, 6, 7], 2: [3, 4, 5], 3: [6, 7, 8]}
     comms2 = {1: [5, 6, 7], 2: [3, 4, 6], 3: [6, 7, 8]}
     comms3 = {1: [5, 6, 7], 2: [6, 7, 8], 3: [3, 4, 5]}
-    omega = Omega(comms1, comms2)
+    comms4 = {0: ['1-t0', '2-t0', '3-t0', '4-t0', '1-t1', '2-t1',  '3-t1','4-t1', '1-t2','2-t2','3-t2','4-t2'],
+              1: ['11-t1', '12-t1', '13-t1'],
+              2: ['5-t2', '6-t2', '7-t2', '5-t0', '6-t0', '7-t0']}
+    comms5 = {1: ['11-t1', '12-t1', '13-t1'],
+              2: ['1-t0', '2-t0', '3-t0', '4-t0', '1-t1', '2-t1',  '3-t1','4-t1', '1-t2','2-t2','3-t2','4-t2'],
+              3: ['5-t2', '6-t2', '7-t2', '5-t0', '6-t0', '7-t0']}
+    omega = Omega(comms4, comms5)
+    print omega.omega_score

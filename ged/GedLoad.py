@@ -4,8 +4,7 @@ import json
 
 
 class GedLoad:
-    def __init__(self, filename):
-        filename = "/home/lias/PycharmProjects/GED/test_input_community_edges.json"
+    def __init__(self, filename="/home/lias/PycharmProjects/GED/test_input_community_edges.json"):
         self.data = self.openFile(filename)
         self.graphs, self.comms = self.getGraphs()
 
@@ -22,10 +21,10 @@ class GedLoad:
     def getGraphs(self):
         graphs = {}
         com_time = {}
-        for timeIdx, window in enumerate(self.data['windows'], 1):
+        for timeIdx, window in enumerate(self.data['windows']):
             comms = {}
             edges = []
-            for com_index, community in enumerate(window['communities'], 1):
+            for com_index, community in enumerate(window['communities']):
                 comms[com_index] = []
                 for e in community:
                     edges.append((e[0], e[1]))
@@ -34,5 +33,6 @@ class GedLoad:
                 #comms[com_index] = list(set([node for edge in community for node in edge]))
             graphs[timeIdx] = nx.Graph(edges)
             com_time[timeIdx] = comms
-
         return graphs, com_time
+
+

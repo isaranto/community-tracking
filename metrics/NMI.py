@@ -7,7 +7,7 @@ from subprocess import Popen, PIPE
 
 
 class NMI:
-    def __init__(self, comms1, comms2, evaluation_type="sets"):
+    def __init__(self, comms1, comms2, evaluation_type="dynamic"):
         self.eval = evaluation_type
         self.write_files(comms1, comms2)
         res = self.execute_cpp()
