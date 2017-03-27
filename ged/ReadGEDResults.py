@@ -16,10 +16,9 @@ class ReadGEDResults:
         cont = {}
         for res in results:
             tf1, com1, tf2, com2, event = res
-            if event in {'continuing','growing','shrinking'}:
+            if event in {'continuing', 'growing', 'shrinking'}:
                 cont[(int(tf1), int(com1))] = (int(tf2), int(com2))
                 cont[(int(tf2), int(com2))] = False
-        print cont
         dynamic_coms_list = []
 
         def dynamic_com(tf, com, new_com):
@@ -61,4 +60,4 @@ class ReadGEDResults:
 
 if __name__ == '__main__':
     ged = ReadGEDResults("/home/lias/PycharmProjects/GED/test_input_community_edges.json")
-    print ged.dynamic_coms
+    print type(ged.dynamic_coms)

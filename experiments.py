@@ -2,6 +2,7 @@ from __future__ import division
 from muturank import Muturank_new
 from synthetic import SyntheticDataConverter
 from metrics import NMI, Omega, Bcubed
+from dblp import dblp_loader
 import networkx as nx
 from itertools import combinations_with_replacement
 import random
@@ -43,8 +44,8 @@ if __name__=="__main__":
     # data = Data(my_coms, graphs, len(graphs), number_of_dynamic_communities)
     #  ---------------------------------
     # Dynamic Netword Generator data (50 nodes/3 tfs)
-    number_of_dynamic_communities = len(sd.comms[0])
-    data = Data(sd.comms, sd.graphs, len(sd.graphs), len(sd.comms[0]))
+    # number_of_dynamic_communities = len(sd.comms[0])
+    # data = Data(sd.comms, sd.graphs, len(sd.graphs), len(sd.comms[0]))
     #  ---------------------------------
     #Dynamic Network Generator data (50 nodes/3 tfs) - Same network everywhere except one tf
     # dict = {
@@ -58,13 +59,17 @@ if __name__=="__main__":
     # number_of_dynamic_communities = len(sd.comms[0])
     # data = Data(comms, dict, len(dict), len(sd.comms[0]))
     # ---------------------------------
-    ground_truth = {i: [] for i in range(number_of_dynamic_communities)}
-    for tf, coms in data.comms.iteritems():
-        for i, com in coms.iteritems():
-            print tf,i,com
-            for node in com:
-                ground_truth[i].append(str(node)+"-t"+str(tf))
-    print ground_truth
+    dblp = dblp_loader("data/dblp/my_dblp_data.json", start_year=2000, end_year=2004, coms='comp')
+    number_of_dynamic_communities = len(dblp.dynamic_coms)
+    data = Data(dblp.communities, dblp.graphs, len(dblp.graphs), len(dblp.dynamic_coms))
+    ground_truth = dblp.dynamic_coms
+    # ---------------------------------
+    # ground_truth = {i: [] for i in range(number_of_dynamic_communities)}
+    # for tf, coms in data.comms.iteritems():
+    #     for i, com in coms.iteritems():
+    #         for node in com:
+    #             ground_truth[i].append(str(node)+"-t"+str(tf))
+    # ---------------------------------
     # Run muturank - One connection
     mutu = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one',
                         clusters=number_of_dynamic_communities, default_q=False)
@@ -119,7 +124,7 @@ if __name__=="__main__":
         fp.write("\n Muturank with one connection - default q")
         fp.write("\nMuturank_NMI_score ")
         for key, val in nmi_mutu.items():
-            fp.write(str(key) +" : " +str(val)+" ")
+            fp.write(str(key) +" : "+str(val)+" ")
         fp.write("\nMuturank_Omega_score ")
         fp.write(" Omega = "+ str(omega_mutu.omega_score))
         fp.write("\nMuturank_Bcubed_score ")
@@ -148,7 +153,7 @@ if __name__=="__main__":
         fp.write(" Recall = "+ str(bcubed_mutu.recall))
         fp.write(" Fscore = "+ str(bcubed_mutu.fscore))
         fp.write("\n Q = "+ str(mutu.q_new))
-    fact = TensorFact(data.graphs, num_of_coms=number_of_dynamic_communities, threshold=1e-4, seeds=1000)
+    fact = TensorFact(data.graphs, num_of_coms=number_of_dynamic_communities, threshold=1e-4, seeds=1)
     # with open('gauvin.pickle', 'wb') as fp:
     #     pickle.dump(fact, fp, protocol=pickle.HIGHEST_PROTOCOL)
     nmi_gauvin = NMI(ground_truth, fact.dynamic_coms, evaluation_type="dynamic").results

@@ -1,7 +1,7 @@
 from __future__ import division
 import json
 import re
-from itertools import combinations_with_replacement
+from itertools import combinations_with_replacement,combinations
 import networkx as nx
 import pprint
 import pickle
@@ -74,8 +74,8 @@ class dblp_parser:
 
 
 class dblp_loader:
-    def __init__(self, _file, start_year, end_year, conf_file='../data/dblp/confs.txt',
-                 coms='conf', new_file ='../data/dblp/dblp_filtered.json' ):
+    def __init__(self, _file, start_year, end_year, conf_file='data/dblp/confs.txt',
+                 coms='comp', new_file ='../data/dblp/dblp_filtered.json' ):
         with open(_file, 'r')as fp:
             # load json and convert year-keys to int
             self.data = {int(k): v for k, v in json.load(fp).items()}
@@ -86,10 +86,13 @@ class dblp_loader:
         # self.communities = self.get_comms(start_year, end_year)
         conf_edges = self.get_conf_edges(start_year, end_year)
         self.conf_graphs = self.get_conf_graphs(conf_edges)
-        if coms == 'conf':
-            self.communities = self.get_conf_com(start_year, end_year)
-        else:
+        if coms == 'comp':
+            # Connected components (within conferences) are communities
             self.communities, self.com_conf_map = self.get_cc_com()
+            self.dynamic_coms = self.get_dynamic_coms()
+        else:
+            # conferences are communities
+            self.communities = self.get_conf_com(start_year, end_year)
         #self.create_new_file(start_year, end_year, new_file)
 
     def get_edges(self, start_year, end_year):
@@ -265,6 +268,58 @@ class dblp_loader:
         with open(new_file, 'w')as fp:
             json.dump(filtered_data, fp, indent=2)
 
+
+    def get_dynamic_coms(self):
+        """
+        Track communities: if two communities from different timeframes belong to the same conference and they have
+        at leat one common author/node then put them in the same dynamic community.
+        :return: Dynamic communities
+        """
+        tracked_coms = []
+        # 1.for each community compare with
+        for y1, y2 in zip(self.communities.keys(), self.communities.keys()[1:]):
+            for id1, com1 in self.communities[y1].iteritems():
+                for id2, com2 in self.communities[y2].iteritems():
+                    same_name = self.com_conf_map[y1][id1] == self.com_conf_map[y2][id2]
+                    common_author = set(self.communities[y1][id1]) & set(self.communities[y2][id2])
+                    if same_name and common_author:
+                        tracked_coms.append([str(y1)+"-"+str(id1), str(y2)+"-"+str(id2)])
+        def common_elements(_list):
+            """
+            check if there exists a list with common elements
+            :return:
+            """
+            flag = False
+            for com1, com2 in combinations(_list, 2):
+                if set(com1).intersection(com2):
+                    flag = True
+            return flag
+        while (common_elements(tracked_coms)):
+            for com1, com2 in combinations(tracked_coms, 2):
+                if set(com1).intersection(com2):
+                    try:
+                        tracked_coms.remove(com1)
+                        tracked_coms.remove(com2)
+                    except ValueError:
+                        continue
+                    tracked_coms.append(list(set(com1).union(com2)))
+        dynamic_coms_list = []
+        for d_com in tracked_coms:
+            new_com = []
+            for com in d_com:
+                year = com.split("-")[0]
+                com_id = com.split("-")[1]
+                for node in self.communities[int(year)][int(com_id)]:
+                    new_com.append(str(node)+"-t"+str(year))
+            dynamic_coms_list.append(new_com)
+        dynamic_coms = {i: com for i, com in enumerate(dynamic_coms_list)}
+        return dynamic_coms
+
+
+
+
+
+
 if __name__ == '__main__':
     filename = "../data/dblp/my_dblp_data.json"
     try:
@@ -275,81 +330,84 @@ if __name__ == '__main__':
     except IOError:
         print "creating..."
         start = time.time()
-        dblp = dblp_loader(filename, start_year=2000, end_year=2004, coms='components')
+        dblp = dblp_loader(filename, start_year=2000, end_year=2004, coms='comp')
         with open('../data/dblp/dblp.pkl', 'wb')as fp:
             pickle.dump(dblp, fp, pickle.HIGHEST_PROTOCOL)
-
-    # pprint.pprint(dblp.communities[2000])
-    stats = dblp.get_stats()
-    #pprint.pprint(dblp.data, indent=4, width=2)
-    """for i, graph in dblp.graphs.iteritems():
-        print i, nx.number_connected_components(graph)"""
-    # TODO:  add some comments
-    conf_life = {}
-    for year, data in dblp.data.iteritems():
-        if year>1990:
-            for conf, _ in data.iteritems():
-                try:
-                    conf_life[conf].append(year)
-                except KeyError:
-                    conf_life[conf] = [year]
-                except TypeError:
-                    print conf, year
-    for conf in conf_life.keys():
-        if len(conf_life[conf]) < 5:
-            conf_life.pop(conf, None)
-    print len(conf_life)
-    biennial = []
-    triennial = []
-    annual = []
-    for conf in conf_life.keys():
-        list = conf_life[conf]
-        #if np.std(np.diff(list)) > 0.5:
-        #    del conf_life[conf]
-        #if list[-1]-list[0] < 10:
-        #    del conf_life[conf]
-        #else:
-        diffs = np.diff(list)
-        if np.all(diffs==1):
-            annual.append(conf)
-        elif np.all(diffs==2):
-            biennial.append(conf)
-        elif np.all(diffs==3):
-            triennial.append(conf)
-        else:
-            del conf_life[conf]
-    print "annual", len(annual)
-    print "biennial", len(biennial)
-    print "triennial", len(triennial)
-    print "total", len(conf_life)
-    with open("../data/dblp/Mary/clean_confs.txt", "w") as fp:
-        for conf in conf_life.keys():
-            fp.write("%s\n" % conf)
-    with open("../data/dblp/Mary/annual_confs.txt", "w") as fp:
-        for conf in annual:
-            fp.write("%s\n" % conf)
-    with open("../data/dblp/Mary/biennial_confs.txt", "w") as fp:
-        for conf in biennial:
-            fp.write("%s\n" % conf)
-    with open("../data/dblp/Mary/conf_life_after_1990.json", 'w')as fp:
-            json.dump(conf_life, fp, indent=2)
-    #new_dblp = dblp_loader(_file = filename, start_year=1990, end_year=2016, conf_file =
-    # "../data/dblp/Mary/clean_confs.txt")
-    #new_dblp.create_new_file(start_year=1990, end_year=2016, new_file="../data/dblp/Mary/filtered.json")
-    filtered_data = {}
-    for year, conf_dict in dblp.data.iteritems():
-            if year in range(1990, 2016+1):
-                filtered_data[year]={}
-                for conf, papers in conf_dict.iteritems():
-                    if conf in conf_life.keys():
-                        filtered_data[year][conf] = papers
-    with open("../data/dblp/Mary/dblp_filtered_new.json", 'w') as fp:
-            for year, conferences in filtered_data.iteritems():
-                for conf_name, papers in conferences.iteritems():
-                    fp.write("{")
-                    record = '"year":"{0}", "conf_name": "{1}", "papers": {2}'.format(year, conf_name, papers)
-                    fp.write(record)
-                    fp.write("},\n")
+    import pprint
+    pprint.pprint(dblp.communities)
+    pprint.pprint(dblp.com_conf_map)
+    pprint.pprint(dblp.dynamic_coms)
+    # # pprint.pprint(dblp.communities[2000])
+    # stats = dblp.get_stats()
+    # #pprint.pprint(dblp.data, indent=4, width=2)
+    # """for i, graph in dblp.graphs.iteritems():
+    #     print i, nx.number_connected_components(graph)"""
+    # # TODO:  add some comments
+    # conf_life = {}
+    # for year, data in dblp.data.iteritems():
+    #     if year>1990:
+    #         for conf, _ in data.iteritems():
+    #             try:
+    #                 conf_life[conf].append(year)
+    #             except KeyError:
+    #                 conf_life[conf] = [year]
+    #             except TypeError:
+    #                 print conf, year
+    # for conf in conf_life.keys():
+    #     if len(conf_life[conf]) < 5:
+    #         conf_life.pop(conf, None)
+    # print len(conf_life)
+    # biennial = []
+    # triennial = []
+    # annual = []
+    # for conf in conf_life.keys():
+    #     list = conf_life[conf]
+    #     #if np.std(np.diff(list)) > 0.5:
+    #     #    del conf_life[conf]
+    #     #if list[-1]-list[0] < 10:
+    #     #    del conf_life[conf]
+    #     #else:
+    #     diffs = np.diff(list)
+    #     if np.all(diffs==1):
+    #         annual.append(conf)
+    #     elif np.all(diffs==2):
+    #         biennial.append(conf)
+    #     elif np.all(diffs==3):
+    #         triennial.append(conf)
+    #     else:
+    #         del conf_life[conf]
+    # print "annual", len(annual)
+    # print "biennial", len(biennial)
+    # print "triennial", len(triennial)
+    # print "total", len(conf_life)
+    # with open("../data/dblp/Mary/clean_confs.txt", "w") as fp:
+    #     for conf in conf_life.keys():
+    #         fp.write("%s\n" % conf)
+    # with open("../data/dblp/Mary/annual_confs.txt", "w") as fp:
+    #     for conf in annual:
+    #         fp.write("%s\n" % conf)
+    # with open("../data/dblp/Mary/biennial_confs.txt", "w") as fp:
+    #     for conf in biennial:
+    #         fp.write("%s\n" % conf)
+    # with open("../data/dblp/Mary/conf_life_after_1990.json", 'w')as fp:
+    #         json.dump(conf_life, fp, indent=2)
+    # #new_dblp = dblp_loader(_file = filename, start_year=1990, end_year=2016, conf_file =
+    # # "../data/dblp/Mary/clean_confs.txt")
+    # #new_dblp.create_new_file(start_year=1990, end_year=2016, new_file="../data/dblp/Mary/filtered.json")
+    # filtered_data = {}
+    # for year, conf_dict in dblp.data.iteritems():
+    #         if year in range(1990, 2016+1):
+    #             filtered_data[year]={}
+    #             for conf, papers in conf_dict.iteritems():
+    #                 if conf in conf_life.keys():
+    #                     filtered_data[year][conf] = papers
+    # with open("../data/dblp/Mary/dblp_filtered_new.json", 'w') as fp:
+    #         for year, conferences in filtered_data.iteritems():
+    #             for conf_name, papers in conferences.iteritems():
+    #                 fp.write("{")
+    #                 record = '"year":"{0}", "conf_name": "{1}", "papers": {2}'.format(year, conf_name, papers)
+    #                 fp.write(record)
+    #                 fp.write("},\n")
 
 
 

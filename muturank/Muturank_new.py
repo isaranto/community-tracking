@@ -330,7 +330,6 @@ class Muturank_new:
         # p_new
 
         # initializing p_star and q_star with random probabilities
-        # TODO: p* and q* should be 1/N and 1/m (the same goes for p0 and q0
         # p_star = np.random.dirichlet(np.ones(len(self.node_ids)))
         # q_star = np.random.dirichlet(np.ones(len(self.graphs)))
         # p_star = [1/(self.num_of_nodes*self.tfs) for _ in range(self.num_of_nodes*self.tfs)]
