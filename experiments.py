@@ -11,6 +11,7 @@ import pickle
 from collections import OrderedDict
 import time
 import json
+from tabulate import tabulate
 
 
 class Data(object):
@@ -35,12 +36,11 @@ def object_decoder(obj, num):
     return obj
 
 
-def evaluate(ground_truth, method, name):
+def evaluate1(ground_truth, method, name):
     nmi = NMI(ground_truth, method.dynamic_coms, evaluation_type="dynamic").results
     omega = Omega(ground_truth, method.dynamic_coms)
     bcubed = Bcubed(ground_truth, method.dynamic_coms)
     with open("results.txt", "a") as fp:
-        fp.write("\n-------------------------------------------------------------------------------")
         fp.write("\n "+name)
         fp.write("\nNMI_score ")
         for key, val in nmi.items():
@@ -56,27 +56,56 @@ def evaluate(ground_truth, method, name):
         except Exception:
             pass
 
+def evaluate(results, ground_truth, method, name):
+    nmi = NMI(ground_truth, method.dynamic_coms, evaluation_type="dynamic").results
+    omega = Omega(ground_truth, method.dynamic_coms)
+    bcubed = Bcubed(ground_truth, method.dynamic_coms)
+    results["Method"].append(name)
+    results['NMI'].append(nmi['NMI<Max>'])
+    results['Omega'].append(omega.omega_score)
+    results['Bcubed-Precision'].append(bcubed.precision)
+    results['Bcubed-Recall'].append(bcubed.recall)
+    results['Bcubed-F1'].append(bcubed.fscore)
+    return results
+
+
 def run_experiments(data, ground_truth):
+    results = OrderedDict()
+    results["Method"] = []
+    results['NMI'] = []
+    results['Omega'] = []
+    results['Bcubed-Precision'] = []
+    results['Bcubed-Recall'] = []
+    results['Bcubed-F1'] = []
+
     # Run muturank - One connection
     mutu = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one',
                         clusters=len(ground_truth), default_q=False)
-    evaluate(ground_truth, mutu, "Muturank with one connection")
+    results = evaluate(results, ground_truth, mutu, "Muturank with one connection")
+    f = open('results.txt', 'a')
+    f.write("p Distribution "+str(mutu.p_new)+"\n")
+    f.write("q Distribution "+str(mutu.q_new)+"\n")
+    f.close()
 
     # Muturank with all connections
     mutu = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='all',
                         clusters=len(ground_truth), default_q=False)
-    evaluate(ground_truth, mutu, "Muturank with all connections")
+    results = evaluate(results, ground_truth, mutu, "Muturank with all connections")
+    f = open('results.txt', 'a')
+    f.write("p Distribution "+str(mutu.p_new)+"\n")
+    f.write("q Distribution "+str(mutu.q_new)+"\n")
+    f.close()
     # Muturank with one connection - default q
     mutu = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one',
                         clusters=len(ground_truth), default_q=True)
-    evaluate(ground_truth, mutu, "Muturank with one connection - default q")
+    results = evaluate(results, ground_truth, mutu, "Muturank with one connection - default q")
     # Muturank with all connections - default q
     mutu = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='all',
                         clusters=len(ground_truth), default_q=True)
-    evaluate(ground_truth, mutu, "Muturank with all connections - default q")
+    results = evaluate(results, ground_truth, mutu, "Muturank with all connections - default q")
     # NNTF
     fact = TensorFact(data.graphs, num_of_coms=len(ground_truth), threshold=1e-4, seeds=1)
-    evaluate(ground_truth, fact, "NNTF")
+    results = evaluate(results, ground_truth, fact, "NNTF")
     # GED
     import sys
     sys.path.insert(0, '../GED/')
@@ -94,7 +123,8 @@ def run_experiments(data, ground_truth):
             hypergraph.calculateEvents(f)
     print "--- %s seconds ---" % (time.time() - start_time)
     ged = ReadGEDResults.ReadGEDResults(file_coms=ged_data.fileName, file_output=outfile)
-    evaluate(ground_truth, ged, "GED")
+    results = evaluate(results, ground_truth, ged, "GED")
+    return results
 
 
 def create_ground_truth(communities, number_of_dynamic_communities):
@@ -139,4 +169,10 @@ if __name__=="__main__":
         hand_drawn = json.load(fp)
     for i in range(len(hand_drawn)):
         data = object_decoder(hand_drawn, i)
-        run_experiments(data, data.dynamic_truth)
+        f = open('results.txt', 'a')
+        f.write("\n------------------------NETWORK #"+str(i+1)+"-------------------------------------\n")
+        f.close()
+        results = run_experiments(data, data.dynamic_truth)
+        f = open('results.txt', 'a')
+        f.write(tabulate(results, headers="keys", tablefmt="fancy_grid").encode('utf8')+"\n")
+        f.close()
