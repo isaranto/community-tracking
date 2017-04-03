@@ -249,18 +249,6 @@ class Muturank_new:
                                 a[t][i + self.num_of_nodes*d, i] = 1e-4
                     except IndexError:
                         pass
-        """if connection == 'all':
-            # connect only with previous and next timeframe
-            for t in range(self.tfs):
-                for i in range(a[t].shape[0]):
-                    for m in range(self.tfs):
-                        for n in range(self.tfs):
-                            try:
-                                a[t][i+self.num_of_nodes*m, i+self.num_of_nodes*n] = 1
-                                a[t][i+self.num_of_nodes*n, i+self.num_of_nodes*m] = 1
-                            except IndexError:
-                                pass"""
-
         return a
 
     # @staticmethod
@@ -518,7 +506,7 @@ if __name__ == '__main__':
     """
     edges = {
         0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
-        1: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
+        1: [(11, 12), (11, 13), (12, 13)],
         2: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)]
     }
     # edges = {
@@ -535,6 +523,6 @@ if __name__ == '__main__':
     # print mutu.r
     mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='next', clusters=3,
                             default_q=False)
-    print mutu.a[1].toarray()
+    print mutu.a[0].toarray()
     print mutu.q_new
     print mutu.p_new
