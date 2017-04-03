@@ -46,7 +46,7 @@ class Muturank_new:
         print "Created monorelational in ", time.time()-time1, " seconds"
         print "Performing clustering on monorelational network..."
         time1 = time.time()
-        self.dynamic_com = self.clustering()
+        self.dynamic_coms = self.clustering()
         print "Performed clustering in ", time.time()-time1, " seconds"
         """print sum(self.p_new)
         print sum(self.q_new)
@@ -202,7 +202,30 @@ class Muturank_new:
                                 a[t][i - self.num_of_nodes, i] = 1e-4
                     except IndexError:
                         pass
-        # FIXME: correctly connect all node-timeframes
+        elif connection == 'next':
+            # connect only all timeframes
+            for t in range(self.tfs):
+                for i in range(a[t].shape[0]):
+                    try:
+                        # always check if the nodes exist in the timeframe
+                        # if they do, add an edge, else add a weak edge
+                        # in order to achieve irreducibility
+                        tf = i // self.num_of_nodes
+                        node = i % self.num_of_nodes
+                        if self.graphs[self.tfs_list[tf]].has_node(self.node_ids[node]):
+                            this = True
+                        else:
+                            this = False
+                        for d in range(1, self.tfs):
+                            if self.has_node(t, node) and self.has_node(d, node):
+                                a[t][i, i + self.num_of_nodes*d] = 1
+                                a[t][i + self.num_of_nodes*d, i] = 1
+                                break
+                            else:
+                                a[t][i, i + self.num_of_nodes*d] = 1e-4
+                                a[t][i + self.num_of_nodes*d, i] = 1e-4
+                    except IndexError:
+                        pass
         elif connection == 'all':
             # connect only all timeframes
             for t in range(self.tfs):
@@ -495,7 +518,7 @@ if __name__ == '__main__':
     """
     edges = {
         0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
-        1: [(11, 12), (11, 13), (12, 13)],
+        1: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
         2: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)]
     }
     # edges = {
@@ -510,6 +533,8 @@ if __name__ == '__main__':
     #mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one', clusters=3)
     # print mutu.a[mutu.node_pos[1],mutu.node_pos[4],1]
     # print mutu.r
-    mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one', clusters=3,
+    mutu = Muturank_new(graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='next', clusters=3,
                             default_q=False)
+    print mutu.a[1].toarray()
     print mutu.q_new
+    print mutu.p_new
