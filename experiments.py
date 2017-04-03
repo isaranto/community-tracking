@@ -78,31 +78,67 @@ def run_experiments(data, ground_truth):
     results['Bcubed-Recall'] = []
     results['Bcubed-F1'] = []
 
+
     # Run muturank - One connection
-    mutu = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one',
+    mutu1 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one',
                         clusters=len(ground_truth), default_q=False)
-    results = evaluate(results, ground_truth, mutu, "Muturank with one connection")
+    results = evaluate(results, ground_truth, mutu1, "Muturank with one connection")
+    muturank_res = OrderedDict()
+    # nodes = [str(node)+'-t'+str(i//len(mutu.node_ids)) for i, node in enumerate(mutu.node_ids*mutu.tfs)]
+    muturank_res["tf/node"] = ['t'+str(tf) for tf in mutu1.tfs_list]
+    for i, node in enumerate(mutu1.node_ids):
+        muturank_res[node] = [mutu1.p_new[tf*len(mutu1.node_ids)+i] for tf in range(mutu1.tfs)]
     f = open('results.txt', 'a')
-    f.write("p Distribution "+str(mutu.p_new)+"\n")
-    f.write("q Distribution "+str(mutu.q_new)+"\n")
+    # f.write(tabulate(zip(nodes, mutu.p_new), headers="keys", tablefmt="fancy_grid").encode('utf8')+"\n")
+    f.write(tabulate(muturank_res, headers="keys", tablefmt="fancy_grid").encode('utf8')+"\n")
+    f.write(tabulate(zip(['t'+str(tf) for tf in mutu1.tfs_list], mutu1.q_new), headers="keys",
+                     tablefmt="fancy_grid").encode('utf8')+"\n")
     f.close()
 
     # Muturank with all connections
-    mutu = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='all',
+    mutu2 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='all',
                         clusters=len(ground_truth), default_q=False)
-    results = evaluate(results, ground_truth, mutu, "Muturank with all connections")
+    results = evaluate(results, ground_truth, mutu2, "Muturank with all connections")
+    muturank_res = OrderedDict()
+    # nodes = [str(node)+'-t'+str(i//len(mutu.node_ids)) for i, node in enumerate(mutu.node_ids*mutu.tfs)]
+    muturank_res["tf/node"] = ['t'+str(tf) for tf in mutu2.tfs_list]
+    for i, node in enumerate(mutu2.node_ids):
+        muturank_res[node] = [mutu2.p_new[tf*len(mutu2.node_ids)+i] for tf in range(mutu2.tfs)]
     f = open('results.txt', 'a')
-    f.write("p Distribution "+str(mutu.p_new)+"\n")
-    f.write("q Distribution "+str(mutu.q_new)+"\n")
+    # f.write(tabulate(zip(nodes, mutu.p_new), headers="keys", tablefmt="fancy_grid").encode('utf8')+"\n")
+    f.write(tabulate(muturank_res, headers="keys", tablefmt="fancy_grid").encode('utf8')+"\n")
+    f.write(tabulate(zip(['t'+str(tf) for tf in mutu2.tfs_list], mutu2.q_new), headers="keys",
+                     tablefmt="fancy_grid").encode('utf8')+"\n")
     f.close()
+
+    # Muturank with next connection
+    mutu5 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='next',
+                        clusters=len(ground_truth), default_q=False)
+    results = evaluate(results, ground_truth, mutu5, "Muturank with next connection")
+    muturank_res = OrderedDict()
+    # nodes = [str(node)+'-t'+str(i//len(mutu.node_ids)) for i, node in enumerate(mutu.node_ids*mutu.tfs)]
+    muturank_res["tf/node"] = ['t'+str(tf) for tf in mutu5.tfs_list]
+    for i, node in enumerate(mutu5.node_ids):
+        muturank_res[node] = [mutu5.p_new[tf*len(mutu5.node_ids)+i] for tf in range(mutu5.tfs)]
+    f = open('results.txt', 'a')
+    # f.write(tabulate(zip(nodes, mutu.p_new), headers="keys", tablefmt="fancy_grid").encode('utf8')+"\n")
+    f.write(tabulate(muturank_res, headers="keys", tablefmt="fancy_grid").encode('utf8')+"\n")
+    f.write(tabulate(zip(['t'+str(tf) for tf in mutu5.tfs_list], mutu5.q_new), headers="keys",
+                     tablefmt="fancy_grid").encode('utf8')+"\n")
+    f.close()
+
     # Muturank with one connection - default q
-    mutu = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one',
+    mutu3 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one',
                         clusters=len(ground_truth), default_q=True)
-    results = evaluate(results, ground_truth, mutu, "Muturank with one connection - default q")
+    results = evaluate(results, ground_truth, mutu3, "Muturank with one connection - default q")
     # Muturank with all connections - default q
-    mutu = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='all',
+    mutu4 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='all',
                         clusters=len(ground_truth), default_q=True)
-    results = evaluate(results, ground_truth, mutu, "Muturank with all connections - default q")
+    results = evaluate(results, ground_truth, mutu4, "Muturank with all connections - default q")
+    # Muturank with next connection - default q
+    mutu6 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='next',
+                        clusters=len(ground_truth), default_q=True)
+    results = evaluate(results, ground_truth, mutu4, "Muturank with next connection - default q")
     # NNTF
     fact = TensorFact(data.graphs, num_of_coms=len(ground_truth), threshold=1e-4, seeds=1)
     results = evaluate(results, ground_truth, fact, "NNTF")
