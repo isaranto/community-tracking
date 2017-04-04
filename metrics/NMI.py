@@ -7,8 +7,20 @@ from subprocess import Popen, PIPE
 
 
 class NMI:
-    def __init__(self, comms1, comms2, evaluation_type="dynamic"):
-        self.eval = evaluation_type
+    def __init__(self, comms1, comms2):
+        #self.eval = evaluation_type
+        #FIXME : FIX per_tf evaluation
+        # if self.eval == "per_tf":
+        #     results = []
+        #     for tf in comms1.keys():
+        #         self.write_files(comms1[tf], comms2[tf])
+        #         res = self.execute_cpp()
+        #         results.append = self.get_results(res)
+        #     for i in range(len(results)-1):
+        #         res = results[i].copy()
+        #         res.update(results[i+1])
+        #     self.results = {k: v/3 for k,v in res.iteritems()}
+        # else:
         self.write_files(comms1, comms2)
         res = self.execute_cpp()
         self.results = self.get_results(res)
@@ -18,23 +30,30 @@ class NMI:
                                       [node for i, com in comms1.iteritems() for node in com]))"""
 
     def write_files(self, comms1, comms2):
-        if self.eval == "sets":
-            new_comms1 = {i: set() for i in comms1.keys()}
-            for i, comm in comms1.iteritems():
-                for node in comm:
-                    new_comms1[i].add(node.split('-')[0])
-            new_comms2 = {i: set() for i in comms2.keys()}
-            for i, comm in comms2.iteritems():
-                for node in comm:
-                    new_comms2[i].add(node.split('-')[0])
-
-        if self.eval == "dynamic":
-            new_comms1 = comms1
-            new_comms2 = comms2
-
-        if self.eval == "per_tf":
-            pass
-
+        # if self.eval == "sets":
+        #     new_comms1 = {i: set() for i in comms1.keys()}
+        #     for i, comm in comms1.iteritems():
+        #         for node in comm:
+        #             try:
+        #                 new_comms1[i].add(node.split('-')[0])
+        #             except AttributeError:
+        #                 print node
+        #     new_comms2 = {i: set() for i in comms2.keys()}
+        #     for i, comm in comms2.iteritems():
+        #         for node in comm:
+        #             new_comms2[i].add(node.split('-')[0])
+        #     print new_comms1
+        #     print new_comms2
+        #
+        # if self.eval == "dynamic":
+        #     new_comms1 = comms1
+        #     new_comms2 = comms2
+        #
+        # if self.eval == "per_tf":
+        #     new_comms1 = comms1
+        #     new_comms2 = comms2
+        new_comms1 = comms1
+        new_comms2 = comms2
         with open('/home/lias/PycharmProjects/community-tracking/metrics/nmi/file1.txt', 'w') as fp:
             for _, comm in new_comms1.iteritems():
                 for node in comm:
@@ -95,5 +114,5 @@ if __name__ == '__main__':
                 2: ['11-t1', '12-t1', '13-t1'],
             3: ['5-t2', '6-t2', '7-t2'],
               4: ['5-t0', '6-t0', '7-t0']}
-    nmi = NMI(comms3, comms4, evaluation_type="dynamic").results
+    nmi = NMI(comms1, comms1, evaluation_type="per_tf").results
     print nmi

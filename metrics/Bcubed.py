@@ -16,7 +16,6 @@ class Bcubed:
                     itemset[node].add(id)
                 except KeyError:
                     itemset[node] = set([id])
-        print itemset
         return itemset
 
 

@@ -10,7 +10,8 @@ import pprint
 
 
 class TensorFact:
-    def __init__(self, graphs, num_of_coms, threshold, seeds=20):
+    def __init__(self, graphs, num_of_coms, threshold, seeds=20, overlap=True):
+        self.overlap = overlap
         self.thres = threshold
         self.graphs = graphs
         self.add_self_edges()
@@ -25,14 +26,14 @@ class TensorFact:
         C_org = np.random.rand(len(graphs), num_of_coms)
         self.tensor = ktensor([A_org, B_org, C_org]).totensor()"""
         # self.tensor = self.create_dtensor(graphs)
-        A, B, C = self.nnfact_repeat(seeds)
-        self.dynamic_coms = self.get_comms(A, B, C)
-        self. timeline = self.get_timeline(C)
+        self.A, self.B, self.C = self.nnfact_repeat(seeds)
+        self.dynamic_coms = self.get_comms(self.A, self.B, self.C)
+        self. timeline = self.get_timeline(self.C)
         print "communities: ",
         pprint.pprint(self.dynamic_coms, indent=2, width=80)
         print "communities in timeframes: com:[tfi,tfj...]  ",
         pprint.pprint(self.timeline, indent=2, width=80)
-        self.get_fact_info(A)
+        self.get_fact_info(self.A)
 
 
     def add_self_edges(self):
@@ -139,12 +140,20 @@ class TensorFact:
         """
         comms ={}
         for u in range(A.shape[0]):
-            for c in range(A.shape[1]):
+            if self.overlap:
+                for c in range(A.shape[1]):
+                    if A[u, c] > self.thres:
+                        try:
+                            comms[c].append(self.node_ids[u])
+                        except KeyError:
+                            comms[c] = [self.node_ids[u]]
+            else:
+                c = np.argmax(A[u, :])
                 if A[u, c] > self.thres:
-                    try:
-                        comms[c].append(self.node_ids[u])
-                    except KeyError:
-                        comms[c] = [self.node_ids[u]]
+                        try:
+                            comms[c].append(self.node_ids[u])
+                        except KeyError:
+                            comms[c] = [self.node_ids[u]]
         dynamic_coms ={}
         for i, com in comms.iteritems():
             for tf, G in self.graphs.iteritems():
@@ -210,3 +219,4 @@ if __name__ == '__main__':
     print Omega(fact.dynamic_coms, fact.dynamic_coms).omega_score
     from metrics import NMI
     print NMI(fact.dynamic_coms, fact.dynamic_coms).results
+    print fact.dynamic_coms

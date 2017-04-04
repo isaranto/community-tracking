@@ -78,7 +78,10 @@ class Omega:
         return exp
 
     def calc_omega(self, obs, exp):
-        return (obs-exp)/(1-exp)
+        try:
+            return (obs-exp)/(1-exp)
+        except ZeroDivisionError:
+            return 0
 
 if __name__ == '__main__':
     comms1 = {1: [5, 6, 7], 2: [3, 4, 5], 3: [6, 7, 8]}
