@@ -12,6 +12,8 @@ from collections import OrderedDict
 import time
 import json
 from tabulate import tabulate
+import pprint
+
 
 
 class Data(object):
@@ -57,7 +59,7 @@ def evaluate1(ground_truth, method, name):
             pass
 
 def evaluate(results, ground_truth, method, name):
-    nmi = NMI(ground_truth, method.dynamic_coms, evaluation_type="dynamic").results
+    nmi = NMI(ground_truth, method.dynamic_coms, evaluation_type="sets").results
     omega = Omega(ground_truth, method.dynamic_coms)
     bcubed = Bcubed(ground_truth, method.dynamic_coms)
     results["Method"].append(name)
@@ -69,7 +71,7 @@ def evaluate(results, ground_truth, method, name):
     return results
 
 
-def run_experiments(data, ground_truth):
+def run_experiments(data, ground_truth, network_num):
     results = OrderedDict()
     results["Method"] = []
     results['NMI'] = []
@@ -82,14 +84,13 @@ def run_experiments(data, ground_truth):
     # Run muturank - One connection
     mutu1 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one',
                         clusters=len(ground_truth), default_q=False)
-    results = evaluate(results, ground_truth, mutu1, "Muturank with one connection")
+    results = evaluate(results, ground_truth, mutu1.dynamic_coms, "Muturank with one connection")
     muturank_res = OrderedDict()
-    # nodes = [str(node)+'-t'+str(i//len(mutu.node_ids)) for i, node in enumerate(mutu.node_ids*mutu.tfs)]
     muturank_res["tf/node"] = ['t'+str(tf) for tf in mutu1.tfs_list]
     for i, node in enumerate(mutu1.node_ids):
         muturank_res[node] = [mutu1.p_new[tf*len(mutu1.node_ids)+i] for tf in range(mutu1.tfs)]
     f = open('results.txt', 'a')
-    # f.write(tabulate(zip(nodes, mutu.p_new), headers="keys", tablefmt="fancy_grid").encode('utf8')+"\n")
+    f.write("ONE CONNECTION\n")
     f.write(tabulate(muturank_res, headers="keys", tablefmt="fancy_grid").encode('utf8')+"\n")
     f.write(tabulate(zip(['t'+str(tf) for tf in mutu1.tfs_list], mutu1.q_new), headers="keys",
                      tablefmt="fancy_grid").encode('utf8')+"\n")
@@ -100,12 +101,11 @@ def run_experiments(data, ground_truth):
                         clusters=len(ground_truth), default_q=False)
     results = evaluate(results, ground_truth, mutu2, "Muturank with all connections")
     muturank_res = OrderedDict()
-    # nodes = [str(node)+'-t'+str(i//len(mutu.node_ids)) for i, node in enumerate(mutu.node_ids*mutu.tfs)]
     muturank_res["tf/node"] = ['t'+str(tf) for tf in mutu2.tfs_list]
     for i, node in enumerate(mutu2.node_ids):
         muturank_res[node] = [mutu2.p_new[tf*len(mutu2.node_ids)+i] for tf in range(mutu2.tfs)]
     f = open('results.txt', 'a')
-    # f.write(tabulate(zip(nodes, mutu.p_new), headers="keys", tablefmt="fancy_grid").encode('utf8')+"\n")
+    f.write("ALL CONNECTIONS\n")
     f.write(tabulate(muturank_res, headers="keys", tablefmt="fancy_grid").encode('utf8')+"\n")
     f.write(tabulate(zip(['t'+str(tf) for tf in mutu2.tfs_list], mutu2.q_new), headers="keys",
                      tablefmt="fancy_grid").encode('utf8')+"\n")
@@ -116,15 +116,22 @@ def run_experiments(data, ground_truth):
                         clusters=len(ground_truth), default_q=False)
     results = evaluate(results, ground_truth, mutu5, "Muturank with next connection")
     muturank_res = OrderedDict()
-    # nodes = [str(node)+'-t'+str(i//len(mutu.node_ids)) for i, node in enumerate(mutu.node_ids*mutu.tfs)]
     muturank_res["tf/node"] = ['t'+str(tf) for tf in mutu5.tfs_list]
     for i, node in enumerate(mutu5.node_ids):
         muturank_res[node] = [mutu5.p_new[tf*len(mutu5.node_ids)+i] for tf in range(mutu5.tfs)]
     f = open('results.txt', 'a')
-    # f.write(tabulate(zip(nodes, mutu.p_new), headers="keys", tablefmt="fancy_grid").encode('utf8')+"\n")
+    f.write("NEXT CONNECTION\n")
     f.write(tabulate(muturank_res, headers="keys", tablefmt="fancy_grid").encode('utf8')+"\n")
     f.write(tabulate(zip(['t'+str(tf) for tf in mutu5.tfs_list], mutu5.q_new), headers="keys",
                      tablefmt="fancy_grid").encode('utf8')+"\n")
+    f.write("GROUND TRUTH\n")
+    pprint.pprint(ground_truth, stream=f, width=150)
+    f.write("ONE CONNECTION\n")
+    pprint.pprint(mutu1.dynamic_coms, stream=f, width=150)
+    f.write("ALL CONNECTIONS\n")
+    pprint.pprint(mutu2.dynamic_coms, stream=f, width=150)
+    f.write("NEXT CONNECTION\n")
+    pprint.pprint(mutu2.dynamic_coms, stream=f, width=150)
     f.close()
 
     # Muturank with one connection - default q
@@ -142,6 +149,15 @@ def run_experiments(data, ground_truth):
     # NNTF
     fact = TensorFact(data.graphs, num_of_coms=len(ground_truth), threshold=1e-4, seeds=1)
     results = evaluate(results, ground_truth, fact, "NNTF")
+    with open('results.txt', 'a') as f:
+        f.write("NNTF\n")
+        f.write("A\n")
+        pprint.pprint(fact.A, stream=f, width=150)
+        f.write("B\n")
+        pprint.pprint(fact.B, stream=f, width=150)
+        f.write("C\n")
+        pprint.pprint(fact.C, stream=f, width=150)
+        pprint.pprint(fact.dynamic_coms, stream=f, width=150)
     # GED
     import sys
     sys.path.insert(0, '../GED/')
@@ -153,12 +169,15 @@ def run_experiments(data, ground_truth):
     tracker = Tracker.Tracker(graphs)
     tracker.compare_communities()
     #outfile = 'tmpfiles/ged_results.csv'
-    outfile = '/home/lias/PycharmProjects/GED/dblp_ged_results.csv'
+    outfile = './results/GED-events-handdrawn-'+str(network_num)+'.csv'
     with open(outfile, 'w')as f:
         for hypergraph in tracker.hypergraphs:
             hypergraph.calculateEvents(f)
     print "--- %s seconds ---" % (time.time() - start_time)
     ged = ReadGEDResults.ReadGEDResults(file_coms=ged_data.fileName, file_output=outfile)
+    with open('results.txt', 'a') as f:
+        f.write("GED\n")
+        pprint.pprint(ged.dynamic_coms, stream=f, width=150)
     results = evaluate(results, ground_truth, ged, "GED")
     return results
 
@@ -204,11 +223,12 @@ if __name__=="__main__":
     with open("data/hand-drawn-data.json", mode='r') as fp:
         hand_drawn = json.load(fp)
     for i in range(len(hand_drawn)):
+    #for i in [2]:
         data = object_decoder(hand_drawn, i)
         f = open('results.txt', 'a')
-        f.write("\n------------------------NETWORK #"+str(i+1)+"-------------------------------------\n")
+        f.write("\n"+"-"*80 + "NETWORK #"+str(hand_drawn[i]['id'])+"-"*80+"\n")
         f.close()
-        results = run_experiments(data, data.dynamic_truth)
+        results = run_experiments(data, data.dynamic_truth, hand_drawn[i]['id'])
         f = open('results.txt', 'a')
         f.write(tabulate(results, headers="keys", tablefmt="fancy_grid").encode('utf8')+"\n")
         f.close()
