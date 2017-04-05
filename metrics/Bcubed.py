@@ -4,8 +4,8 @@ class Bcubed:
     def __init__(self, truth, coms):
         self.ground_truth = self.process_input(truth)
         self.communities = self.process_input(coms)
-        self.precision = bcubed.precision(self.ground_truth, self.communities)
-        self.recall = bcubed.recall(self.ground_truth, self.communities)
+        self.precision = bcubed.precision(self.communities, self.ground_truth)
+        self.recall = bcubed.recall(self.communities, self.ground_truth)
         self.fscore = bcubed.fscore(self.precision, self.recall)
 
     def process_input(self, coms):

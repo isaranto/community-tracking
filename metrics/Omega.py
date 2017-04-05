@@ -68,20 +68,20 @@ class Omega:
                     A[n] += 1
             except KeyError:
                 pass
-        obs = sum(A[j]/N for j in range(min(J, K)+1))
+        obs = sum(A[j] for j in range(min(J, K)+1))/N
         return J, K, N, obs, tuples1, tuples2
 
     def expected(self, J, K, N, tuples1, tuples2):
         N1 = Counter(tuples1.values())
         N2 = Counter(tuples2.values())
-        exp = sum((N1[j]*N2[j])/(N**2) for j in range(min(J, K)+1))
+        exp = sum((N1[j]*N2[j]) for j in range(min(J, K)+1))/(N**2)
         return exp
 
     def calc_omega(self, obs, exp):
-        try:
+        if exp==obs==1:
+            return 1.0
+        else:
             return (obs-exp)/(1-exp)
-        except ZeroDivisionError:
-            return 0
 
 if __name__ == '__main__':
     comms1 = {1: [5, 6, 7], 2: [3, 4, 5], 3: [6, 7, 8]}
@@ -93,5 +93,8 @@ if __name__ == '__main__':
     comms5 = {1: ['11-t1', '12-t1', '13-t1'],
               2: ['1-t0', '2-t0', '3-t0', '4-t0', '1-t1', '2-t1',  '3-t1','4-t1', '1-t2','2-t2','3-t2','4-t2'],
               3: ['5-t2', '6-t2', '7-t2', '5-t0', '6-t0', '7-t0']}
+    comms6 ={0: ["1-t0", "2-t0", "3-t0", "4-t0","1-t1", "2-t1", "3-t1", "4-t1", "1-t2", "2-t2", "3-t2",
+                          "4-t2"],
+			 1: ["5-t0", "6-t0", "7-t0", "8-t0", "5-t2", "6-t2", "7-t2", "8-t2"]
+            }
     omega = Omega(comms4, comms5)
-    print omega.omega_score
