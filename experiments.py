@@ -263,6 +263,8 @@ if __name__=="__main__":
     for i in range(len(hand_drawn)):
     #for i in [2]:
         data = object_decoder(hand_drawn, i)
+        from plot import PlotGraphs
+        PlotGraphs(data.graphs, len(data.graphs), 'hand-written'+str(i), 500)
         f = open('results.txt', 'a')
         f.write("\n"+"-"*80 + "NETWORK #"+str(hand_drawn[i]['id'])+"-"*80+"\n")
         f.close()

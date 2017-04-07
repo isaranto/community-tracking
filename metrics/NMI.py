@@ -114,5 +114,5 @@ if __name__ == '__main__':
                 2: ['11-t1', '12-t1', '13-t1'],
             3: ['5-t2', '6-t2', '7-t2'],
               4: ['5-t0', '6-t0', '7-t0']}
-    nmi = NMI(comms1, comms1, evaluation_type="per_tf").results
+    nmi = NMI(comms1, comms1).results
     print nmi
