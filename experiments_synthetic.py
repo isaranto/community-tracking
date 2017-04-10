@@ -159,7 +159,7 @@ def run_experiments(data, ground_truth, network_num):
     all_res.append(evaluate.get_results(ground_truth, fact.dynamic_coms, "NNTF", mutu6.tfs, eval="per_tf"))
     with open('results.txt', 'a') as f:
         f.write("NNTF\n")
-        f.write("Error: "+ fact.error+ + "Seed: "+ str(fact.best_seed)+"\n")
+        f.write("Error: "+ str(fact.error) + "Seed: "+ str(fact.best_seed)+"\n")
         f.write("A\n")
         pprint.pprint(fact.A, stream=f, width=150)
         f.write("B\n")
