@@ -1,6 +1,5 @@
 from __future__ import division
-from itertools import combinations
-from collections import Counter
+from os.path import expanduser
 from subprocess import Popen, PIPE
 
 
@@ -54,13 +53,13 @@ class NMI:
         #     new_comms2 = comms2
         new_comms1 = comms1
         new_comms2 = comms2
-        with open('/home/lias/PycharmProjects/community-tracking/metrics/nmi/file1.txt', 'w') as fp:
+        with open(expanduser('~') +'/PycharmProjects/community-tracking/metrics/nmi/file1.txt', 'w') as fp:
             for _, comm in new_comms1.iteritems():
                 for node in comm:
                     fp.write(str(node))
                     fp.write(" ")
                 fp.write("\n")
-        with open('/home/lias/PycharmProjects/community-tracking/metrics/nmi/file2.txt', 'w') as fp:
+        with open(expanduser('~') +'/PycharmProjects/community-tracking/metrics/nmi/file2.txt', 'w') as fp:
             for _, comm in new_comms2.iteritems():
                 for node in comm:
                     fp.write(str(node))
@@ -83,7 +82,7 @@ class NMI:
         return nodes
 
     def execute_cpp(self):
-        p = Popen(['/home/lias/PycharmProjects/community-tracking/metrics/nmi/onmi /home/lias/PycharmProjects/community-tracking/metrics/nmi/file1.txt /home/lias/PycharmProjects/community-tracking/metrics/nmi/file2.txt'], shell=True, stdout=PIPE, stdin=PIPE)
+        p = Popen([expanduser('~') +'/PycharmProjects/community-tracking/metrics/nmi/onmi ' +expanduser('~') +'/PycharmProjects/community-tracking/metrics/nmi/file1.txt '+expanduser('~') +'/PycharmProjects/community-tracking/metrics/nmi/file2.txt'], shell=True, stdout=PIPE, stdin=PIPE)
         result = []
         for ii in range(4):
             value = str(ii) + '\n'
@@ -114,5 +113,5 @@ if __name__ == '__main__':
                 2: ['11-t1', '12-t1', '13-t1'],
             3: ['5-t2', '6-t2', '7-t2'],
               4: ['5-t0', '6-t0', '7-t0']}
-    nmi = NMI(comms1, comms1, evaluation_type="per_tf").results
+    nmi = NMI(comms1, comms1).results
     print nmi

@@ -230,7 +230,9 @@ def create_ground_truth(communities, number_of_dynamic_communities):
 
 
 if __name__=="__main__":
-    path_test = "/home/lias/Dropbox/Msc/thesis/src/NEW/synthetic-data-generator/src/expand/"
+    from os.path import expanduser
+    home = expanduser("~")
+    path_test = home+"/Dropbox/Msc/thesis/src/NEW/synthetic-data-generator/src/expand/"
     path_full = "data/synthetic/expand"
     sd = SyntheticDataConverter(path_test)
     nodes = sd.graphs[0].nodes()
@@ -258,7 +260,7 @@ if __name__=="__main__":
     # data = Data(dblp.communities, dblp.graphs, len(dblp.graphs), len(dblp.dynamic_coms))
     # ground_truth = dblp.dynamic_coms
     # ---------------------------------
-    with open("data/hand-drawn-data.json", mode='r') as fp:
+    with open(home+"/Dropbox/Msc/thesis/data/hand-drawn-data.json", mode='r') as fp:
         hand_drawn = json.load(fp)
     for i in range(len(hand_drawn)):
     #for i in [2]:
