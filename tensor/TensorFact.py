@@ -101,8 +101,12 @@ class TensorFact:
         # if it doesnt give better results, run with best seed
         if error > min_error:
             A, B, C, error = self.tensor_decomp(best_seed)
+            self.error = error
+            self.best_seed =best_seed
             print "Error = ", error, " seed: ", best_seed
         else:
+            self.error = error
+            self.best_seed = best_seed
             print "Error = ", error, "with Custom init", ", seed: ", best_seed
         print "A = \n", A, "\n B = \n", B, "\n C = \n", C
         return A, B, C
