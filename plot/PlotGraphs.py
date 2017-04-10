@@ -7,8 +7,8 @@ class PlotGraphs:
         self.draw_graphs(graphs, timeframes, type, node_size)
 
     def draw_graphs(self, graphs, timeframes, type, node_size):
-        for i in range(1, timeframes+1):
+        for i in range(timeframes):
             plt.figure()
             nx.draw(graphs[i], node_size=node_size, with_labels=True)
             plt.suptitle(type+"_Timeframe "+str(i), fontsize=14, fontweight='bold')
-            plt.savefig(type+"_Timeframe_"+str(i)+".png")
+            plt.savefig("images/"+type+"_Timeframe_"+str(i)+".png")
