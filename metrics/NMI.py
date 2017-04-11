@@ -1,7 +1,8 @@
 from __future__ import division
 from os.path import expanduser
+import os
 from subprocess import Popen, PIPE
-
+dir = os.path.dirname(__file__)
 
 
 
@@ -53,13 +54,13 @@ class NMI:
         #     new_comms2 = comms2
         new_comms1 = comms1
         new_comms2 = comms2
-        with open(expanduser('~') +'/PycharmProjects/community-tracking/metrics/nmi/file1.txt', 'w') as fp:
+        with open(dir+'/nmi/file1.txt', 'w') as fp:
             for _, comm in new_comms1.iteritems():
                 for node in comm:
                     fp.write(str(node))
                     fp.write(" ")
                 fp.write("\n")
-        with open(expanduser('~') +'/PycharmProjects/community-tracking/metrics/nmi/file2.txt', 'w') as fp:
+        with open(dir+'/nmi/file2.txt', 'w') as fp:
             for _, comm in new_comms2.iteritems():
                 for node in comm:
                     fp.write(str(node))
@@ -82,7 +83,7 @@ class NMI:
         return nodes
 
     def execute_cpp(self):
-        p = Popen([expanduser('~') +'/PycharmProjects/community-tracking/metrics/nmi/onmi ' +expanduser('~') +'/PycharmProjects/community-tracking/metrics/nmi/file1.txt '+expanduser('~') +'/PycharmProjects/community-tracking/metrics/nmi/file2.txt'], shell=True, stdout=PIPE, stdin=PIPE)
+        p = Popen([dir+'/nmi/onmi '+dir + '/nmi/file1.txt '+dir + '/nmi/file2.txt'], shell=True, stdout=PIPE, stdin=PIPE)
         result = []
         for ii in range(4):
             value = str(ii) + '\n'

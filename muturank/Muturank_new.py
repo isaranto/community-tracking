@@ -388,6 +388,8 @@ class Muturank_new:
             self.p_new = self.p_new/np.sum(self.p_new)
             self.q_new = self.q_new/np.sum(self.q_new)
             t += 1
+            print "EPOCH ", t
+            print "error ",np.linalg.norm(self.p_new-self.p_old)**2 + np.linalg.norm(self.q_new-self.q_old)**2
             #self.check_probs()
             #checking the calculation of probabilities
         # for j in range(len(self.node_ids)):

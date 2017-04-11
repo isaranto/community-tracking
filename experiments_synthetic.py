@@ -101,7 +101,7 @@ def run_experiments(data, ground_truth, network_num):
     muturank_res["tf/node"] = ['t' + str(tf) for tf in mutu1.tfs_list]
     for i, node in enumerate(mutu1.node_ids):
         muturank_res[node] = [mutu1.p_new[tf * len(mutu1.node_ids) + i] for tf in range(mutu1.tfs)]
-    f = open('results_synthetic.txt', 'a')
+    f = open('results_synthetic_birth.txt', 'a')
     f.write("ONE CONNECTION\n")
     f.write(tabulate(muturank_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
     f.write(tabulate(zip(['t' + str(tf) for tf in mutu1.tfs_list], mutu1.q_new), headers="keys",
@@ -121,7 +121,7 @@ def run_experiments(data, ground_truth, network_num):
     muturank_res["tf/node"] = ['t' + str(tf) for tf in mutu2.tfs_list]
     for i, node in enumerate(mutu2.node_ids):
         muturank_res[node] = [mutu2.p_new[tf * len(mutu2.node_ids) + i] for tf in range(mutu2.tfs)]
-    f = open('results_synthetic.txt', 'a')
+    f = open('results_synthetic_birth.txt', 'a')
     f.write("ALL CONNECTIONS\n")
     f.write(tabulate(muturank_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
     f.write(tabulate(zip(['t' + str(tf) for tf in mutu2.tfs_list], mutu2.q_new), headers="keys",
@@ -140,7 +140,7 @@ def run_experiments(data, ground_truth, network_num):
     muturank_res["tf/node"] = ['t' + str(tf) for tf in mutu3.tfs_list]
     for i, node in enumerate(mutu3.node_ids):
         muturank_res[node] = [mutu3.p_new[tf * len(mutu3.node_ids) + i] for tf in range(mutu3.tfs)]
-    f = open('results_synthetic.txt', 'a')
+    f = open('results_synthetic_birth.txt', 'a')
     f.write("NEXT CONNECTION\n")
     f.write(tabulate(muturank_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
     f.write(tabulate(zip(['t' + str(tf) for tf in mutu3.tfs_list], mutu3.q_new), headers="keys",
@@ -156,11 +156,11 @@ def run_experiments(data, ground_truth, network_num):
     f.close()
 
     # NNTF
-    fact = TensorFact(data.graphs, num_of_coms=len(ground_truth), threshold=1e-4, seeds=1000, overlap=False)
+    fact = TensorFact(data.graphs, num_of_coms=len(ground_truth), threshold=1e-4, seeds=10, overlap=False)
     all_res.append(evaluate.get_results(ground_truth, fact.dynamic_coms, "NNTF", mutu6.tfs, eval="dynamic"))
     all_res.append(evaluate.get_results(ground_truth, fact.dynamic_coms, "NNTF", mutu6.tfs, eval="sets"))
     all_res.append(evaluate.get_results(ground_truth, fact.dynamic_coms, "NNTF", mutu6.tfs, eval="per_tf"))
-    with open('results_synthetic.txt', 'a') as f:
+    with open('results_synthetic_birth.txt', 'a') as f:
         f.write("NNTF\n")
         f.write("Error: "+ str(fact.error) + "Seed: "+ str(fact.best_seed)+"\n")
         f.write("A\n")
@@ -187,12 +187,12 @@ def run_experiments(data, ground_truth, network_num):
             hypergraph.calculateEvents(f)
     print "--- %s seconds ---" % (time.time() - start_time)
     ged = ReadGEDResults.ReadGEDResults(file_coms=ged_data.fileName, file_output=outfile)
-    with open('results_synthetic.txt', 'a') as f:
+    with open('results_synthetic_birth.txt', 'a') as f:
         f.write("GED\n")
         pprint.pprint(ged.dynamic_coms, stream=f, width=150)
     all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED", mutu6.tfs, eval="dynamic"))
     all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED", mutu6.tfs, eval="sets"))
-    all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED", mutu6.tfs, eval="per_tf"))
+    #all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED", mutu6.tfs, eval="per_tf"))
     return all_res
 
 
@@ -208,8 +208,8 @@ def create_ground_truth(communities, number_of_dynamic_communities):
 if __name__=="__main__":
     from os.path import expanduser
     home = expanduser("~")
-    path_test = home+"/Dropbox/Msc/thesis/src/NEW/synthetic-data-generator/src/expand/"
-    path_full = home+"/Dropbox/Msc/thesis/data/synthetic_generator/data/expand_contract_data"
+    #path_test = home+"/Dropbox/Msc/thesis/src/NEW/synthetic-data-generator/src/expand/"
+    path_full = home+"/Dropbox/Msc/thesis/data/synthetic_generator/data/birth_death_data"
     sd = SyntheticDataConverter(path_full)
     # nodes = sd.graphs[0].nodes()
     # # edges_1 = random.sample(list(combinations_with_replacement(nodes, 2)), 50)
@@ -237,9 +237,9 @@ if __name__=="__main__":
     # data = Data(dblp.communities, dblp.graphs, len(dblp.graphs), len(dblp.dynamic_coms))
     # ground_truth = dblp.dynamic_coms
     # ---------------------------------
-    from plot import PlotGraphs
-    PlotGraphs(data.graphs, len(data.graphs), 'expand-contract', 100)
-    all_res = run_experiments(data, data.dynamic_truth, 'expand')
+    #from plot import PlotGraphs
+    #PlotGraphs(data.graphs, len(data.graphs), 'expand-contract', 100)
+    all_res = run_experiments(data, data.dynamic_truth, 'birth')
     results = OrderedDict()
     results["Method"] = []
     results['Eval'] = []
@@ -251,6 +251,6 @@ if __name__=="__main__":
     for res in all_res:
         for k, v in res.iteritems():
             results[k].extend(v)
-    f = open('results_synthetic.txt', 'a')
+    f = open('results_synthetic_birth.txt', 'a')
     f.write(tabulate(results, headers="keys", tablefmt="fancy_grid").encode('utf8')+"\n")
     f.close()
