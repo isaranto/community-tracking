@@ -15,6 +15,8 @@ class SyntheticDataConverter:
             self.type = "birth-death"
         elif any(item.startswith('mergesplit') for item in files):
             self.type = "merge-split"
+        elif any(item.startswith('hide') for item in files):
+            self.type = "hide"
 
         self.edges_files = [item for item in sorted(files) if item.endswith('edges')]
         self.comm_files = [item for item in sorted(files) if item.endswith('comm')]
