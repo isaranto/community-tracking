@@ -196,13 +196,13 @@ def run_experiments(data, ground_truth, network_num):
     return all_res
 
 
-def create_ground_truth(communities, number_of_dynamic_communities):
-        ground_truth = {i: [] for i in range(number_of_dynamic_communities)}
-        for tf, coms in communities.iteritems():
-            for i, com in coms.iteritems():
-                for node in com:
-                    ground_truth[i].append(str(node)+"-t"+str(tf))
-        return ground_truth
+# def create_ground_truth(communities, number_of_dynamic_communities):
+#         ground_truth = {i: [] for i in range(number_of_dynamic_communities)}
+#         for tf, coms in communities.iteritems():
+#             for i, com in coms.iteritems():
+#                 for node in com:
+#                     ground_truth[i].append(str(node)+"-t"+str(tf))
+#         return ground_truth
 
 
 if __name__=="__main__":
@@ -211,15 +211,14 @@ if __name__=="__main__":
     #path_test = home+"/Dropbox/Msc/thesis/src/NEW/synthetic-data-generator/src/expand/"
     path_full = home+"/Dropbox/Msc/thesis/data/synthetic_generator/data/hide_data"
     sd = SyntheticDataConverter(path_full)
-    pprint.pprint(sd.graphs[0].nodes())
     # nodes = sd.graphs[0].nodes()
     # # edges_1 = random.sample(list(combinations_with_replacement(nodes, 2)), 50)
     # # edges_2 = random.sample(list(combinations_with_replacement(nodes, 2)), 207)
     #  ---------------------------------
     #Dynamic Network Generator data (50 nodes/3 tfs)
     number_of_dynamic_communities = len(sd.graphs[0])
-    ground_truth = create_ground_truth(sd.comms, len(sd.comms[0]))
-    data = Data(comms=sd.comms, graphs=sd.graphs, timeFrames=len(sd.graphs), number_of_dynamic_communities=len(sd.comms[0]), dynamic_truth=ground_truth)
+    data = Data(comms=sd.comms, graphs=sd.graphs, timeFrames=len(sd.graphs), number_of_dynamic_communities=len(
+        sd.dynamic_truth), dynamic_truth=sd.dynamic_truth)
     #  ---------------------------------
     #Dynamic Network Generator data (50 nodes/3 tfs) - Same network everywhere except one tf
     # dict = {

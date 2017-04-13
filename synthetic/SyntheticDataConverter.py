@@ -30,6 +30,8 @@ class SyntheticDataConverter:
         for i in range(self.timeFrames):
             self.graphs[int(i)] = nx.Graph(self.edges[i])
         self.add_self_edges()
+        self.timeline = self.get_timeline()
+        self.dynamic_truth = self.get_dynamic_coms()
 
 
 
@@ -84,9 +86,21 @@ class SyntheticDataConverter:
             with open(self.filePath+_file, 'r') as fp:
                 for line in fp:
                     timeline = {}
-                    comm = int(line.split(":")[0].translate(None, "M"))
+                    comm = int(line.split(":")[0].translate(None, "M"))-1
                     time_list = line.split(":")[1].strip().strip(",").split(",")
                     for time, value in enumerate(time_list):
-                        timeline[time] = int(value.split("=")[1])
+                        timeline[time] = int(value.split("=")[1])-1
                     dyn_communities[comm] = timeline
         return dyn_communities
+
+    def get_dynamic_coms(self):
+        dynamic_coms = {i: [] for i in self.timeline.keys()}
+        for i, timeline in self.timeline.iteritems():
+            new_com = []
+            for tf, com in timeline.iteritems():
+                for node in self.comms[tf][com]:
+                    new_com.append("-t".join([str(node), str(tf)]))
+            dynamic_coms[i] = new_com
+        return dynamic_coms
+
+
