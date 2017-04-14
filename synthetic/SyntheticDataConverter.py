@@ -88,19 +88,18 @@ class SyntheticDataConverter:
                     timeline = {}
                     comm = int(line.split(":")[0].translate(None, "M"))-1
                     time_list = line.split(":")[1].strip().strip(",").split(",")
-                    for time, value in enumerate(time_list):
-                        timeline[time] = int(value.split("=")[1])-1
+                    print time_list
+                    for value in time_list:
+                        timeline[int(value.split("=")[0])-1] = int(value.split("=")[1])-1
                     dyn_communities[comm] = timeline
         return dyn_communities
 
     def get_dynamic_coms(self):
         dynamic_coms = {i: [] for i in self.timeline.keys()}
-        for i, timeline in self.timeline.iteritems():
+        for i, d_com_timeline in self.timeline.iteritems():
             new_com = []
-            for tf, com in timeline.iteritems():
-                for node in self.comms[tf][com]:
+            for tf, com_num in d_com_timeline.iteritems():
+                for node in self.comms[tf][com_num]:
                     new_com.append("-t".join([str(node), str(tf)]))
             dynamic_coms[i] = new_com
         return dynamic_coms
-
-

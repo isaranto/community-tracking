@@ -211,6 +211,7 @@ if __name__=="__main__":
     #path_test = home+"/Dropbox/Msc/thesis/src/NEW/synthetic-data-generator/src/expand/"
     path_full = home+"/Dropbox/Msc/thesis/data/synthetic_generator/data/hide_data"
     sd = SyntheticDataConverter(path_full)
+    pprint.pprint(sd.comms)
     # nodes = sd.graphs[0].nodes()
     # # edges_1 = random.sample(list(combinations_with_replacement(nodes, 2)), 50)
     # # edges_2 = random.sample(list(combinations_with_replacement(nodes, 2)), 207)
