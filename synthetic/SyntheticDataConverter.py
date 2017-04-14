@@ -88,7 +88,6 @@ class SyntheticDataConverter:
                     timeline = {}
                     comm = int(line.split(":")[0].translate(None, "M"))-1
                     time_list = line.split(":")[1].strip().strip(",").split(",")
-                    print time_list
                     for value in time_list:
                         timeline[int(value.split("=")[0])-1] = int(value.split("=")[1])-1
                     dyn_communities[comm] = timeline

@@ -101,7 +101,7 @@ def run_experiments(data, ground_truth, network_num):
     muturank_res["tf/node"] = ['t' + str(tf) for tf in mutu1.tfs_list]
     for i, node in enumerate(mutu1.node_ids):
         muturank_res[node] = [mutu1.p_new[tf * len(mutu1.node_ids) + i] for tf in range(mutu1.tfs)]
-    f = open('results_synthetic_hide.txt', 'a')
+    f = open(results_file, 'a')
     f.write("ONE CONNECTION\n")
     f.write(tabulate(muturank_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
     f.write(tabulate(zip(['t' + str(tf) for tf in mutu1.tfs_list], mutu1.q_new), headers="keys",
@@ -121,7 +121,7 @@ def run_experiments(data, ground_truth, network_num):
     muturank_res["tf/node"] = ['t' + str(tf) for tf in mutu2.tfs_list]
     for i, node in enumerate(mutu2.node_ids):
         muturank_res[node] = [mutu2.p_new[tf * len(mutu2.node_ids) + i] for tf in range(mutu2.tfs)]
-    f = open('results_synthetic_hide.txt', 'a')
+    f = open(results_file, 'a')
     f.write("ALL CONNECTIONS\n")
     f.write(tabulate(muturank_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
     f.write(tabulate(zip(['t' + str(tf) for tf in mutu2.tfs_list], mutu2.q_new), headers="keys",
@@ -140,7 +140,7 @@ def run_experiments(data, ground_truth, network_num):
     muturank_res["tf/node"] = ['t' + str(tf) for tf in mutu3.tfs_list]
     for i, node in enumerate(mutu3.node_ids):
         muturank_res[node] = [mutu3.p_new[tf * len(mutu3.node_ids) + i] for tf in range(mutu3.tfs)]
-    f = open('results_synthetic_hide.txt', 'a')
+    f = open(results_file, 'a')
     f.write("NEXT CONNECTION\n")
     f.write(tabulate(muturank_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
     f.write(tabulate(zip(['t' + str(tf) for tf in mutu3.tfs_list], mutu3.q_new), headers="keys",
@@ -160,9 +160,9 @@ def run_experiments(data, ground_truth, network_num):
     all_res.append(evaluate.get_results(ground_truth, fact.dynamic_coms, "NNTF", mutu6.tfs, eval="dynamic"))
     all_res.append(evaluate.get_results(ground_truth, fact.dynamic_coms, "NNTF", mutu6.tfs, eval="sets"))
     all_res.append(evaluate.get_results(ground_truth, fact.dynamic_coms, "NNTF", mutu6.tfs, eval="per_tf"))
-    with open('results_synthetic_hide.txt', 'a') as f:
+    with open(results_file, 'a') as f:
         f.write("NNTF\n")
-        f.write("Error: "+ str(fact.error) + "Seed: "+ str(fact.best_seed)+"\n")
+        f.write("Error: " + str(fact.error) + "Seed: " + str(fact.best_seed)+"\n")
         f.write("A\n")
         pprint.pprint(fact.A, stream=f, width=150)
         f.write("B\n")
@@ -187,7 +187,7 @@ def run_experiments(data, ground_truth, network_num):
             hypergraph.calculateEvents(f)
     print "--- %s seconds ---" % (time.time() - start_time)
     ged = ReadGEDResults.ReadGEDResults(file_coms=ged_data.fileName, file_output=outfile)
-    with open('results_synthetic_hide.txt', 'a') as f:
+    with open(results_file, 'a') as f:
         f.write("GED\n")
         pprint.pprint(ged.dynamic_coms, stream=f, width=150)
     all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED", mutu6.tfs, eval="dynamic"))
@@ -196,22 +196,13 @@ def run_experiments(data, ground_truth, network_num):
     return all_res
 
 
-# def create_ground_truth(communities, number_of_dynamic_communities):
-#         ground_truth = {i: [] for i in range(number_of_dynamic_communities)}
-#         for tf, coms in communities.iteritems():
-#             for i, com in coms.iteritems():
-#                 for node in com:
-#                     ground_truth[i].append(str(node)+"-t"+str(tf))
-#         return ground_truth
-
 
 if __name__=="__main__":
     from os.path import expanduser
     home = expanduser("~")
-    #path_test = home+"/Dropbox/Msc/thesis/src/NEW/synthetic-data-generator/src/expand/"
-    path_full = home+"/Dropbox/Msc/thesis/data/synthetic_generator/data/hide_data"
+    path_full = home+"/Dropbox/Msc/thesis/data/synthetic_generator/data/expand_contract_data"
+    results_file = "results_synthetic_"+path_full.split("/")[-1]+".txt"
     sd = SyntheticDataConverter(path_full)
-    pprint.pprint(sd.comms)
     # nodes = sd.graphs[0].nodes()
     # # edges_1 = random.sample(list(combinations_with_replacement(nodes, 2)), 50)
     # # edges_2 = random.sample(list(combinations_with_replacement(nodes, 2)), 207)
@@ -240,7 +231,7 @@ if __name__=="__main__":
     # ---------------------------------
     #from plot import PlotGraphs
     #PlotGraphs(data.graphs, len(data.graphs), 'expand-contract', 100)
-    all_res = run_experiments(data, data.dynamic_truth, 'hide')
+    all_res = run_experiments(data, data.dynamic_truth, 'expand')
     results = OrderedDict()
     results["Method"] = []
     results['Eval'] = []
@@ -252,6 +243,6 @@ if __name__=="__main__":
     for res in all_res:
         for k, v in res.iteritems():
             results[k].extend(v)
-    f = open('results_synthetic_hide.txt', 'a')
+    f = open(results_file, 'a')
     f.write(tabulate(results, headers="keys", tablefmt="fancy_grid").encode('utf8')+"\n")
     f.close()
