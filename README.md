@@ -1,6 +1,7 @@
 # Tracking the evolution of communities in Dynamic Social Networks
 
-One Paragraph of project description goes here
+Our  intention  is  to  transform  the  problem  of  dynamic  community  finding  to  that  of  finding
+communities in poly-relational network
 
 ## Getting Started
 
