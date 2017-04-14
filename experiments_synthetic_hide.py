@@ -31,8 +31,7 @@ def object_decoder(obj, num):
         graphs = {}
         for i, edges in edges.items():
             graphs[i] = nx.Graph(edges)
-        comms = {int(tf): {int(id): com for id, com in coms.iteritems()} for tf, coms in obj[num]['comms'].iteritems() }
-        print comms
+        comms = {int(tf): {int(id): com for id, com in coms.iteritems()} for tf, coms in obj[num]['comms'].iteritems()}
         dynamic_coms = {int(id): [str(node) for node in com] for id, com in obj[num]['dynamic_truth'].iteritems()}
         return Data(comms, graphs, len(graphs), len(dynamic_coms), dynamic_coms)
     return obj

@@ -10,8 +10,10 @@ import pprint
 
 
 class TensorFact:
-    def __init__(self, graphs, num_of_coms, threshold, seeds=20, overlap=True):
+    def __init__(self, graphs, num_of_coms, threshold, seeds=20, overlap=True, original_graphs=None):
         self.overlap = overlap
+        # original graphs only used when performing NNTF on Timerank tensor
+        self.orig_graphs = original_graphs
         self.thres = threshold
         self.graphs = graphs
         self.add_self_edges()
@@ -162,13 +164,19 @@ class TensorFact:
         for i, com in comms.iteritems():
             for tf, G in self.graphs.iteritems():
                 for node in com:
-                    if G.has_node(node):
-                        try:
-                            dynamic_coms[i].append(str(node)+"-t"+str(tf))
-                        except KeyError:
-                            dynamic_coms[i] = [str(node)+"-t"+str(tf)]
+                    if self.orig_graphs:
+                        if self.orig_graphs[tf].has_node(node):
+                            try:
+                                dynamic_coms[i].append(str(node)+"-t"+str(tf))
+                            except KeyError:
+                                dynamic_coms[i] = [str(node)+"-t"+str(tf)]
+                    else:
+                        if G.has_node(node):
+                            try:
+                                dynamic_coms[i].append(str(node)+"-t"+str(tf))
+                            except KeyError:
+                                dynamic_coms[i] = [str(node)+"-t"+str(tf)]
         return dynamic_coms
-
 
     def get_timeline(self, C):
         timeline = {}
@@ -218,7 +226,7 @@ if __name__ == '__main__':
     graphs = {}
     for i, edges in edges.items():
         graphs[i] = nx.Graph(edges)
-    fact = TensorFact(graphs, num_of_coms=3, seeds=1, threshold=1e-4)
+    fact = TensorFact(graphs, num_of_coms=3, seeds=1, threshold=1e-4,original_graphs=graphs)
     from metrics import Omega
     print Omega(fact.dynamic_coms, fact.dynamic_coms).omega_score
     from metrics import NMI

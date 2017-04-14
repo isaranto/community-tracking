@@ -38,50 +38,9 @@ def object_decoder(obj, num):
     return obj
 
 
-def evaluate1(ground_truth, method, name):
-    nmi = NMI(ground_truth, method.dynamic_coms, evaluation_type="dynamic").results
-    omega = Omega(ground_truth, method.dynamic_coms)
-    bcubed = Bcubed(ground_truth, method.dynamic_coms)
-    with open("results_hand.txt", "a") as fp:
-        fp.write("\n "+name)
-        fp.write("\nNMI_score ")
-        for key, val in nmi.items():
-            fp.write(str(key) +" : " +str(val)+" ")
-        fp.write("\nOmega_score ")
-        fp.write(" Omega = "+ str(omega.omega_score))
-        fp.write("\nBcubed_score ")
-        fp.write(" Precision = "+ str(bcubed.precision))
-        fp.write(" Recall = "+ str(bcubed.recall))
-        fp.write(" Fscore = "+ str(bcubed.fscore))
-        try:
-            fp.write("\n Q = "+ str(method.q_new))
-        except Exception:
-            pass
-
-# def evaluate(results, ground_truth, method, name):
-#     nmi = NMI(ground_truth, method.dynamic_coms, evaluation_type="sets").results
-#     omega = Omega(ground_truth, method.dynamic_coms)
-#     bcubed = Bcubed(ground_truth, method.dynamic_coms)
-#     results["Method"].append(name)
-#     results['NMI'].append(nmi['NMI<Max>'])
-#     results['Omega'].append(omega.omega_score)
-#     results['Bcubed-Precision'].append(bcubed.precision)
-#     results['Bcubed-Recall'].append(bcubed.recall)
-#     results['Bcubed-F1'].append(bcubed.fscore)
-#     return results
-
 
 def run_experiments(data, ground_truth, network_num):
     all_res = []
-    # results = OrderedDict()
-    # results["Method"] = []
-    # results['NMI'] = []
-    # results['Omega'] = []
-    # results['Bcubed-Precision'] = []
-    # results['Bcubed-Recall'] = []
-    # results['Bcubed-F1'] = []
-
-
     # Muturank with one connection - default q
     mutu4 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one',
                         clusters=len(ground_truth), default_q=True)
@@ -195,24 +154,26 @@ def run_experiments(data, ground_truth, network_num):
         f.write("C\n")
         pprint.pprint(fact.C, stream=f, width=150)
         pprint.pprint(fact.dynamic_coms, stream=f, width=150)
-    #
-    # new_graphs = {}
-    # for i, A in mutu1.a.iteritems():
-    #     new_graphs[i] = nx.from_scipy_sparse_matrix(A)
-    # fact2 = TensorFact(new_graphs, num_of_coms=len(ground_truth), threshold=1e-4, seeds=1, overlap=False)
-    # all_res.append(evaluate.get_results(ground_truth, fact2.dynamic_coms, "NNTF", mutu6.tfs, eval="dynamic"))
-    # all_res.append(evaluate.get_results(ground_truth, fact2.dynamic_coms, "NNTF", mutu6.tfs, eval="sets"))
-    # all_res.append(evaluate.get_results(ground_truth, fact2.dynamic_coms, "NNTF", mutu6.tfs, eval="per_tf"))
-    # with open('results_hand.txt', 'a') as f:
-    #     f.write("NNTF\n")
-    #     f.write("Error: " + str(fact2.error) + + "Seed: " + str(fact2.best_seed) + "\n")
-    #     f.write("A\n")
-    #     pprint.pprint(fact2.A, stream=f, width=150)
-    #     f.write("B\n")
-    #     pprint.pprint(fact2.B, stream=f, width=150)
-    #     f.write("C\n")
-    #     pprint.pprint(fact2.C, stream=f, width=150)
-    #     pprint.pprint(fact2.dynamic_coms, stream=f, width=150)
+
+    new_graphs = {}
+    for i, A in mutu1.a.iteritems():
+        new_graphs[i] = nx.from_scipy_sparse_matrix(A)
+    fact2 = TensorFact(new_graphs, num_of_coms=len(ground_truth), threshold=1e-4, seeds=1, overlap=False,
+                       original_graphs=data.graphs)
+    all_res.append(evaluate.get_results(ground_truth, fact2.dynamic_coms, "NNTF-Timerank tensor", mutu6.tfs,
+                                        eval="dynamic"))
+    all_res.append(evaluate.get_results(ground_truth, fact2.dynamic_coms, "NNTF-Timerank tensor", mutu6.tfs, eval="sets"))
+    all_res.append(evaluate.get_results(ground_truth, fact2.dynamic_coms, "NNTF-Timerank tensor", mutu6.tfs, eval="per_tf"))
+    with open('results_hand.txt', 'a') as f:
+        f.write("NNTF\n")
+        f.write("Error: " + str(fact2.error) + "Seed: " + str(fact2.best_seed) + "\n")
+        f.write("A\n")
+        pprint.pprint(fact2.A, stream=f, width=150)
+        f.write("B\n")
+        pprint.pprint(fact2.B, stream=f, width=150)
+        f.write("C\n")
+        pprint.pprint(fact2.C, stream=f, width=150)
+        pprint.pprint(fact2.dynamic_coms, stream=f, width=150)
     # GED
     import sys
     sys.path.insert(0, '../GED/')
@@ -251,27 +212,6 @@ def create_ground_truth(communities, number_of_dynamic_communities):
 if __name__=="__main__":
     from os.path import expanduser
     home = expanduser("~")
-    path_test = home+"/Dropbox/Msc/thesis/src/NEW/synthetic-data-generator/src/expand/"
-    sd = SyntheticDataConverter(path_test)
-    nodes = sd.graphs[0].nodes()
-    edges_1 = random.sample(list(combinations_with_replacement(nodes, 2)), 50)
-    edges_2 = random.sample(list(combinations_with_replacement(nodes, 2)), 207)
-    #  ---------------------------------
-    # Dynamic Netword Generator data (50 nodes/3 tfs)
-    # number_of_dynamic_communities = len(sd.comms[0])
-    # data = Data(sd.comms, sd.graphs, len(sd.graphs), len(sd.comms[0]))
-    #  ---------------------------------
-    #Dynamic Network Generator data (50 nodes/3 tfs) - Same network everywhere except one tf
-    # dict = {
-    #     0: sd.graphs[0],
-    #     1: sd.graphs[0],
-    #     2: sd.graphs[2],
-    #     3: sd.graphs[0],
-    #     4: sd.graphs[0]
-    # }
-    # comms = {0: sd.comms[0], 1: sd.comms[0],2: sd.comms[2], 3: sd.comms[0],4: sd.comms[0]}
-    # number_of_dynamic_communities = len(sd.comms[0])
-    # data = Data(comms, dict, len(dict), len(sd.comms[0]))
     # ---------------------------------
     # dblp = dblp_loader("data/dblp/my_dblp_data.json", start_year=2000, end_year=2004, coms='comp')
     # number_of_dynamic_communities = len(dblp.dynamic_coms)
@@ -283,11 +223,12 @@ if __name__=="__main__":
     for i in range(len(hand_drawn)):
     #for i in [2]:
         data = object_decoder(hand_drawn, i)
-        from plot import PlotGraphs
-        PlotGraphs(data.graphs, len(data.graphs), 'hand-written'+str(i), 500)
+        #from plot import PlotGraphs
+        #PlotGraphs(data.graphs, len(data.graphs), 'hand-written'+str(i), 500)
         f = open('results_hand.txt', 'a')
         f.write("\n"+"-"*80 + "NETWORK #"+str(hand_drawn[i]['id'])+"-"*80+"\n")
         f.close()
+        print hand_drawn[i]['id']
         all_res = run_experiments(data, data.dynamic_truth, hand_drawn[i]['id'])
         results = OrderedDict()
         results["Method"] = []

@@ -124,3 +124,6 @@ venv/
 img/
 ncp/
 metrics/nmi
+results*
+test*
+*lprof
