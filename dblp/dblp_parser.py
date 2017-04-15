@@ -75,7 +75,7 @@ class dblp_parser:
 
 class dblp_loader:
     def __init__(self, _file, start_year, end_year, conf_file='data/dblp/confs.txt',
-                 coms='comp', new_file ='../data/dblp/dblp_filtered.json' ):
+                 coms='comp', new_file=None ):
         with open(_file, 'r')as fp:
             # load json and convert year-keys to int
             self.data = {int(k): v for k, v in json.load(fp).items()}
@@ -93,7 +93,8 @@ class dblp_loader:
         else:
             # conferences are communities
             self.communities = self.get_conf_com(start_year, end_year)
-        #self.create_new_file(start_year, end_year, new_file)
+        if new_file:
+            self.create_new_file(start_year, end_year, new_file)
 
     def get_edges(self, start_year, end_year):
         """
@@ -318,8 +319,6 @@ class dblp_loader:
 
 
 
-
-
 if __name__ == '__main__':
     filename = "../data/dblp/my_dblp_data.json"
     try:
@@ -330,18 +329,20 @@ if __name__ == '__main__':
     except IOError:
         print "creating..."
         start = time.time()
-        dblp = dblp_loader(filename, start_year=2000, end_year=2004, coms='comp')
+        dblp = dblp_loader(filename, start_year=1970, end_year=2015, coms='comp')
         with open('../data/dblp/dblp.pkl', 'wb')as fp:
             pickle.dump(dblp, fp, pickle.HIGHEST_PROTOCOL)
     import pprint
-    pprint.pprint(dblp.communities)
-    pprint.pprint(dblp.com_conf_map)
-    pprint.pprint(dblp.dynamic_coms)
-    # # pprint.pprint(dblp.communities[2000])
-    # stats = dblp.get_stats()
-    # #pprint.pprint(dblp.data, indent=4, width=2)
-    # """for i, graph in dblp.graphs.iteritems():
-    #     print i, nx.number_connected_components(graph)"""
+    # pprint.pprint(dblp.communities)
+    # pprint.pprint(dblp.com_conf_map)
+    # pprint.pprint(dblp.dynamic_coms)
+    # pprint.pprint(dblp.communities[2000])
+    stats = dblp.get_stats()
+    pprint.pprint(dblp.conf_graphs, indent=4, width=2)
+    for year, confs in dblp.conf_graphs.iteritems():
+        comps = sum([nx.number_connected_components(g) for g in confs.values()])
+        papers = sum([len(dblp.data[year][c]) for c in confs.keys()])
+        print year, len(dblp.conf_graphs[year]), len(dblp.communities[year]), comps, papers
     # # TODO:  add some comments
     # conf_life = {}
     # for year, data in dblp.data.iteritems():

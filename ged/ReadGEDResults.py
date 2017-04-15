@@ -5,7 +5,6 @@ class ReadGEDResults:
     def __init__(self, file_coms, file_output='../data/dblp_ged_results.csv'):
         self.coms = GedLoad(file_coms).comms
         self.dynamic_coms = self.read_output(file_output)
-        print self.dynamic_coms
 
     def read_output(self, _file):
         results = []
@@ -56,8 +55,43 @@ class ReadGEDResults:
 
 
 
-
+class Data(object):
+    def __init__(self, comms, graphs, timeFrames, number_of_dynamic_communities, dynamic_truth=[]):
+        self.comms = comms
+        self.graphs = graphs
+        self.timeFrames = timeFrames
+        self.number_of_dynamic_communities = number_of_dynamic_communities
+        self.dynamic_truth = dynamic_truth
 
 if __name__ == '__main__':
-    ged = ReadGEDResults("/home/lias/PycharmProjects/GED/test_input_community_edges.json")
-    print type(ged.dynamic_coms)
+    #ged = ReadGEDResults("/home/lias/PycharmProjects/GED/test_input_community_edges.json")
+    edges = {
+        0: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)],
+        1: [(11, 12), (11, 13), (12, 13)],
+        2: [(1, 2), (1, 3), (1, 4), (3, 4), (5, 6), (6, 7), (5, 7)]
+    }
+    my_coms = {0: {0: [1, 2, 3, 4], 1: [5, 6, 7]},
+               1: {2: [11, 12, 13] },
+               2: {0: [1, 2, 3, 4], 1: [5, 6, 7]}
+    }
+    graphs = {}
+    import networkx as nx
+    for i, edges in edges.items():
+        graphs[i] = nx.Graph(edges)
+    number_of_dynamic_communities = 3
+    data = Data(my_coms, graphs, len(graphs), number_of_dynamic_communities)
+    import sys
+    sys.path.insert(0, '../../GED/')
+    import preprocessing, Tracker
+    from ged import GedWrite, ReadGEDResults
+    ged_data = GedWrite(data)
+    graphs = preprocessing.getGraphs(ged_data.fileName)
+    tracker = Tracker.Tracker(graphs)
+    tracker.compare_communities()
+    #outfile = 'tmpfiles/ged_results.csv'
+    outfile = '/home/lias/PycharmProjects/GED/dblp_ged_results.csv'
+    with open(outfile, 'w')as f:
+        for hypergraph in tracker.hypergraphs:
+            hypergraph.calculateEvents(f)
+    ged = ReadGEDResults.ReadGEDResults(file_coms=ged_data.fileName, file_output=outfile)
+    print data.dynamic_truth
