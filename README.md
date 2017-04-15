@@ -9,11 +9,13 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-What things you need to install the software and how to install them
+All packages available through pip can be found in the file 'requirements.txt'. You can install them by running:
 
 ```
-Give examples
+pip install -r requirements.txt
 ```
+There are 3 more external packages used: 'GED' is the python repository available in "demokritos-github" for Group Evolution Discovery. 'omni' is the C++ package
+for NMI evaluation and 'ncp' is the package available in 'gauvin github' for Non Negative Tensor Factorization with the least alternate squares method.
 
 ### Installing
 
