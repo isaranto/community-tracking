@@ -158,6 +158,12 @@ class Muturank_new:
         return a, o, r, sum_cols, sum_time
 
     def add_time_edges(self, a, connection):
+        """
+        The function add the inter-timeframe edges proposed in Timerank, across all tensor slices
+        :param a:
+        :param connection:
+        :return:
+        """
         # check if node i exists in graph[timeframe]
         if connection == 'one':
             # connect only with previous and next timeframe
@@ -273,6 +279,8 @@ class Muturank_new:
 
     def irr_components_time(self, a):
         """
+        After the new representation (with the addition of N*T nodes for each timeframe) the new graphs are made
+        irreducible once again.
         :param a:
         :return:
         """
@@ -312,12 +320,26 @@ class Muturank_new:
     #     return self.create_adj_tensor(graphs)
     #@profile
     def prob_t(self, d, j, denom):
+        """
+        Calculation of probalities p_t (d|j)
+        :param d:
+        :param j:
+        :param denom:
+        :return:
+        """
         p = (self.q_old[d]*self.sum_cols[j, d])/denom
         # np.sum([self.q_old[m]*self.a[m][j, l] for l in range(self.num_of_nodes*self.tfs) for m in range(self.tfs)])
         return p
 
     #@profile
     def prob_n(self, i, j, denom):
+        """
+        Calculation of probalities p_t (i|j)
+        :param i:
+        :param j:
+        :param denom:
+        :return:
+        """
         #p = np.sum([self.q_old[m]*self.a[m][j, i] for m in range(self.tfs)])/denom
         p = self.a_i[j].getrow(i).dot(self.q_old)/denom
         # np.sum([self.q_old[m]*self.a[m][j, l] for l in range(self.num_of_nodes*self.tfs) for m in range(self.tfs)])
@@ -326,6 +348,7 @@ class Muturank_new:
     #@profile
     def run_muturank(self):
         """
+        Running the iterative process of muturank until convergence.
         Input:
             A:      the affinity tensor
             e:      the convergence threshold
@@ -401,12 +424,20 @@ class Muturank_new:
 
     #@profile
     def create_monorelational(self):
+        """
+        Creating the monorelational network from the weighted sum of all adjacency matrices.
+        :return: w matrix with the final edge weights.
+        """
         w = sparse.lil_matrix((self.num_of_nodes*self.tfs, self.num_of_nodes*self.tfs), dtype=np.float64)
         for d in range(self.tfs):
             w += self.q_new[d]*self.a[d]
         return w
     #@profile
     def clustering(self):
+        """
+        Applies the spectral clustering algorithm on the monorelational network (w matrix)
+        :return: Dynamic communities
+        """
         print "running spectral"
         # # TODO: how to obtain # of communities
         # from scipy.sparse.linalg import eigs
@@ -441,6 +472,10 @@ class Muturank_new:
         return comms
 
     def check_probs(self):
+        """
+        Checkign the correctness of the implementation by checking if probability distributions sum to 1.
+        :return:
+        """
         if np.sum(self.p_new)!=1.0:
             print "p_new ", np.sum(self.p_new), self.p_new
         if np.sum(self.q_new) != 1.0:
@@ -464,6 +499,11 @@ class Muturank_new:
                 print "prob_n is", sum, " for i=", i
 
     def check_irreducibility(self, a):
+        """
+        Checks the tensor for irreducibility.
+        :param a:
+        :return:
+        """
         check = True
         for _, graph in self.graphs.iteritems():
             check = check and nx.is_connected(graph)
@@ -478,9 +518,17 @@ class Muturank_new:
         return check
 
     def has_node(self, tf, node):
+        """
+        checks if graph in tf has the specific node by checking the corresponding node id.
+        :param tf: timeframe
+        :param node: position of node in matrix/tensor
+        :return:
+        """
         return self.graphs[self.tfs_list[tf]].has_node(self.node_ids[node])
 
     def check_irr_w(self):
+        """
+        Checks the matrix w for irreducibility.
         edges = []
         count = 0
         for i in range(self.w.shape[0]):
