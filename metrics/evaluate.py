@@ -65,10 +65,7 @@ def get_results(ground_truth, method, name, tfs_len, eval="dynamic"):
         results = evaluate(new_comms1, new_comms2, name, eval)
     elif eval == "per_tf":
         new_comms1 = unravel_tf(ground_truth, tfs_len)
-        import pprint
-        pprint.pprint(new_comms1)
         new_comms2 = unravel_tf(method, tfs_len)
-        pprint.pprint(new_comms2)
         per_tf = []
         for t in range(tfs_len):
             per_tf.append(Counter(evaluate(new_comms1[t], new_comms2[t], name, eval)))

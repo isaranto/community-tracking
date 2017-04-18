@@ -64,7 +64,9 @@ def run_experiments(data, ground_truth, network_num):
     all_res.append(
         evaluate.get_results(ground_truth, mutu4.dynamic_coms, "Muturank with one connection - default q", mutu4.tfs,
                              eval="per_tf"))
-    pprint.pprint(all_res)
+    f = open(results_file, 'a')
+    f.write(tabulate(all_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
+    f.close()
     # Muturank with all connections - default q
     mutu5 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='all',
                          clusters=len(ground_truth), default_q=True)
@@ -77,6 +79,9 @@ def run_experiments(data, ground_truth, network_num):
     all_res.append(evaluate.get_results(ground_truth, mutu5.dynamic_coms, "Muturank with all connections - default "
                                                                           "q", mutu5.tfs,
                                         eval="per_tf"))
+    f = open(results_file, 'a')
+    f.write(tabulate(all_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
+    f.close()
     # Muturank with next connection - default q
     mutu6 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='next',
                          clusters=len(ground_truth), default_q=True)
@@ -86,7 +91,9 @@ def run_experiments(data, ground_truth, network_num):
                                         mutu6.tfs, eval="sets"))
     all_res.append(evaluate.get_results(ground_truth, mutu6.dynamic_coms, "Muturank with next connection - default q",
                                         mutu6.tfs, eval="per_tf"))
-
+    f = open(results_file, 'a')
+    f.write(tabulate(all_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
+    f.close()
     # Run muturank - One connection
     mutu1 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one',
                          clusters=len(ground_truth), default_q=False)
@@ -96,6 +103,9 @@ def run_experiments(data, ground_truth, network_num):
                                         eval="sets"))
     all_res.append(evaluate.get_results(ground_truth, mutu1.dynamic_coms, "Muturank with one connection", mutu1.tfs,
                                         eval="per_tf"))
+    f = open(results_file, 'a')
+    f.write(tabulate(all_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
+    f.close()
     muturank_res = OrderedDict()
     muturank_res["tf/node"] = ['t' + str(tf) for tf in mutu1.tfs_list]
     for i, node in enumerate(mutu1.node_ids):
@@ -116,6 +126,9 @@ def run_experiments(data, ground_truth, network_num):
                                         eval="sets"))
     all_res.append(evaluate.get_results(ground_truth, mutu2.dynamic_coms, "Muturank with all connections", mutu2.tfs,
                                         eval="per_tf"))
+    f = open(results_file, 'a')
+    f.write(tabulate(all_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
+    f.close()
     muturank_res = OrderedDict()
     muturank_res["tf/node"] = ['t' + str(tf) for tf in mutu2.tfs_list]
     for i, node in enumerate(mutu2.node_ids):
@@ -135,6 +148,9 @@ def run_experiments(data, ground_truth, network_num):
                                         eval="sets"))
     all_res.append(evaluate.get_results(ground_truth, mutu3.dynamic_coms, "Muturank with next connection", mutu3.tfs,
                                         eval="per_tf"))
+    f = open(results_file, 'a')
+    f.write(tabulate(all_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
+    f.close()
     muturank_res = OrderedDict()
     muturank_res["tf/node"] = ['t' + str(tf) for tf in mutu3.tfs_list]
     for i, node in enumerate(mutu3.node_ids):
@@ -159,6 +175,9 @@ def run_experiments(data, ground_truth, network_num):
     all_res.append(evaluate.get_results(ground_truth, fact.dynamic_coms, "NNTF", mutu6.tfs, eval="dynamic"))
     all_res.append(evaluate.get_results(ground_truth, fact.dynamic_coms, "NNTF", mutu6.tfs, eval="sets"))
     all_res.append(evaluate.get_results(ground_truth, fact.dynamic_coms, "NNTF", mutu6.tfs, eval="per_tf"))
+    f = open(results_file, 'a')
+    f.write(tabulate(all_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
+    f.close()
     with open(results_file, 'a') as f:
         f.write("NNTF\n")
         f.write("Error: " + str(fact.error) + "Seed: " + str(fact.best_seed)+"\n")
