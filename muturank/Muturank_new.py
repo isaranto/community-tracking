@@ -575,4 +575,4 @@ if __name__ == '__main__':
                             default_q=False)
     print mutu.a[0].toarray()
     print mutu.q_new
-    print mutu.p_new
+    print mutu.p_new"""

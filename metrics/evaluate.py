@@ -1,7 +1,7 @@
 from __future__ import division
 import NMI, Omega, Bcubed
 from collections import Counter, OrderedDict
-
+import itertools
 
 def unravel_tf(dynamic, tfs_len):
     """
@@ -20,8 +20,21 @@ def unravel_tf(dynamic, tfs_len):
                 comms[tf][c].append(node)
             except KeyError:
                 comms[tf][c] = [node]
-    return comms
+    return remove_duplicate_coms(comms)
 
+def remove_duplicate_coms(communities):
+    """
+    Removes duplicates from list of lists
+    :param communities:
+    :return:
+    """
+    new_comms = {tf: {} for tf in communities.keys()}
+    for tf, comms in communities.iteritems():
+        unique_coms = [set(c) for c in comms.values()]
+        unique_coms = list(comms for comms,_ in itertools.groupby(unique_coms))
+        for i, com in enumerate(unique_coms):
+            new_comms[tf][i] = list(com)
+    return new_comms
 
 def evaluate(ground_truth, method, name, eval):
     nmi = NMI.NMI(ground_truth, method).results
@@ -52,7 +65,10 @@ def get_results(ground_truth, method, name, tfs_len, eval="dynamic"):
         results = evaluate(new_comms1, new_comms2, name, eval)
     elif eval == "per_tf":
         new_comms1 = unravel_tf(ground_truth, tfs_len)
+        import pprint
+        pprint.pprint(new_comms1)
         new_comms2 = unravel_tf(method, tfs_len)
+        pprint.pprint(new_comms2)
         per_tf = []
         for t in range(tfs_len):
             per_tf.append(Counter(evaluate(new_comms1[t], new_comms2[t], name, eval)))
@@ -75,13 +91,15 @@ if __name__ == "__main__":
               2: ['11-t1', '12-t1', '13-t1'],
               3: ['5-t2', '6-t2', '7-t2'],
               4: ['5-t0', '6-t0', '7-t0']}
-    comms5 = {1: ['1-t0','2-t0', '3-t0','4-t0', '1-t1', '2-t1',  '3-t1','4-t1', '1-t2','2-t2','3-t2','4-t2'],
-              2: ['11-t1', '12-t1', '13-t1'],
-              3: ['5-t0', '6-t0', '7-t0', '5-t2', '6-t2', '7-t2']}
+    comms5 = { 5: ['5-t0', '6-t0', '7-t0'],
+            1: ['1-t0','2-t0', '3-t0','4-t0', '1-t1', '2-t1',  '3-t1','4-t1', '1-t2','2-t2','3-t2','4-t2'],
+              2: ['11-t1', '12-t1', '13-t1','5-t0', '6-t0', '7-t0'],
+              3: [ '5-t0', '6-t0', '7-t0', '5-t2', '6-t2', '7-t2'],
+            4:['5-t0', '7-t0','6-t0', ]}
     all_res = []
-    all_res.append(get_results(comms3, comms4, "Muturank" , 3, eval="dynamic"))
-    all_res.append(get_results(comms3, comms4, "Muturank" , 3, eval="sets"))
-    all_res.append(get_results(comms3, comms4, "Muturank" , 3, eval="per_tf"))
+    all_res.append(get_results(comms4, comms5, "Muturank" , 3, eval="dynamic"))
+    all_res.append(get_results(comms4, comms5, "Muturank" , 3, eval="sets"))
+    all_res.append(get_results(comms4, comms5, "Muturank" , 3, eval="per_tf"))
     results = OrderedDict()
     results["Method"] = []
     results['Eval'] = []
@@ -90,9 +108,11 @@ if __name__ == "__main__":
     results['Bcubed-Precision'] = []
     results['Bcubed-Recall'] = []
     results['Bcubed-F1'] = []
+
+    from tabulate import tabulate
     for res in all_res:
         for k, v in res.iteritems():
             results[k].extend(v)
-    print results
+    print(tabulate(results, headers="keys", tablefmt="fancy_grid").encode('utf8')+"\n")
 
 
