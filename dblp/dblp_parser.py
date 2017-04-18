@@ -74,7 +74,7 @@ class dblp_parser:
 
 
 class dblp_loader:
-    def __init__(self, _file, start_year, end_year, conf_file='data/dblp/confs.txt',
+    def __init__(self, _file, start_year, end_year, conf_file='../data/dblp/confs.txt',
                  coms='comp', new_file=None ):
         with open(_file, 'r')as fp:
             # load json and convert year-keys to int
@@ -329,7 +329,7 @@ if __name__ == '__main__':
     except IOError:
         print "creating..."
         start = time.time()
-        dblp = dblp_loader(filename, start_year=1970, end_year=2015, coms='comp')
+        dblp = dblp_loader(filename, start_year=2000, end_year=2010, coms='comp', new_file="../data/dblp/filtered.json")
         with open('../data/dblp/dblp.pkl', 'wb')as fp:
             pickle.dump(dblp, fp, pickle.HIGHEST_PROTOCOL)
     import pprint
@@ -343,6 +343,8 @@ if __name__ == '__main__':
         comps = sum([nx.number_connected_components(g) for g in confs.values()])
         papers = sum([len(dblp.data[year][c]) for c in confs.keys()])
         print year, len(dblp.conf_graphs[year]), len(dblp.communities[year]), comps, papers
+    for year, graph in dblp.graphs.iteritems():
+        print year, ", nodes: ",nx.number_of_nodes(graph), ", edges: ",nx.number_of_edges(graph)
     # # TODO:  add some comments
     # conf_life = {}
     # for year, data in dblp.data.iteritems():

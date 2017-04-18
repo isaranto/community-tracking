@@ -202,13 +202,13 @@ if __name__=="__main__":
     path_full = home+"/Dropbox/Msc/thesis/data/dblp/1"
     results_file = "results_dblp_"+path_full.split("/")[-1]+".txt"
     print results_file
-    dblp = dblp_loader(path_full+"/my_dblp_data.json", conf_file= path_full+"/confs.txt", start_year=2000,
-                       end_year=2004, coms='comp')
+    dblp = dblp_loader(path_full+"/my_dblp_data.json", conf_file= path_full+"/confs.txt", start_year=2001,
+                       end_year=2010, coms='comp')
     number_of_dynamic_communities = len(dblp.dynamic_coms)
     data = Data(dblp.communities, dblp.graphs, len(dblp.graphs), len(dblp.dynamic_coms), dblp.dynamic_coms)
     #from plot import PlotGraphs
     #PlotGraphs(data.graphs, len(data.graphs), 'expand-contract', 100)
-    all_res = run_experiments(data, data.dynamic_truth, 'birth')
+    all_res = run_experiments(data, data.dynamic_truth, 'dblp')
     results = OrderedDict()
     results["Method"] = []
     results['Eval'] = []
