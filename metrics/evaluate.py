@@ -36,7 +36,7 @@ def remove_duplicate_coms(communities):
             new_comms[tf][i] = list(com)
     return new_comms
 
-def evaluate(ground_truth, method, name, eval):
+def evaluate(ground_truth, method, name, eval, duration):
     nmi = NMI.NMI(ground_truth, method).results
     omega = Omega.Omega(ground_truth, method)
     bcubed = Bcubed.Bcubed(ground_truth, method)
@@ -48,11 +48,12 @@ def evaluate(ground_truth, method, name, eval):
     results['Bcubed-Precision'] = [bcubed.precision]
     results['Bcubed-Recall'] = [bcubed.recall]
     results['Bcubed-F1'] = [bcubed.fscore]
+    results['Duration'] = [duration]
     return results
 
-def get_results(ground_truth, method, name, tfs_len, eval="dynamic"):
+def get_results(ground_truth, method, name, tfs_len, eval="dynamic", duration = 0):
     if eval == "dynamic":
-        results = evaluate(ground_truth, method, name, eval)
+        results = evaluate(ground_truth, method, name, eval, duration)
     elif eval == "sets":
         new_comms1 = {i: set() for i in ground_truth.keys()}
         for i, comm in ground_truth.iteritems():
@@ -62,13 +63,13 @@ def get_results(ground_truth, method, name, tfs_len, eval="dynamic"):
         for i, comm in method.iteritems():
             for node in comm:
                 new_comms2[i].add(node.split('-')[0])
-        results = evaluate(new_comms1, new_comms2, name, eval)
+        results = evaluate(new_comms1, new_comms2, name, eval, duration)
     elif eval == "per_tf":
         new_comms1 = unravel_tf(ground_truth, tfs_len)
         new_comms2 = unravel_tf(method, tfs_len)
         per_tf = []
         for t in range(tfs_len):
-            per_tf.append(Counter(evaluate(new_comms1[t], new_comms2[t], name, eval)))
+            per_tf.append(Counter(evaluate(new_comms1[t], new_comms2[t], name, eval, duration)))
         results = sum(per_tf, Counter())
         for key in results:
             if all(isinstance(x, str) for x in results[key]):
@@ -105,6 +106,7 @@ if __name__ == "__main__":
     results['Bcubed-Precision'] = []
     results['Bcubed-Recall'] = []
     results['Bcubed-F1'] = []
+    results['Duration'] = []
 
     from tabulate import tabulate
     for res in all_res:

@@ -7,7 +7,7 @@ from copy import deepcopy, copy
 from scipy import sparse
 from sklearn.cluster import spectral_clustering
 import time
-import pprint
+import datetime
 import random
 np.set_printoptions(precision=3, linewidth=300, formatter={'float_kind': '{:.5f}'.format})
 
@@ -15,6 +15,7 @@ np.set_printoptions(precision=3, linewidth=300, formatter={'float_kind': '{:.5f}
 class Muturank_new:
     #@profile
     def __init__(self, graphs, threshold, alpha, beta, connection, clusters, default_q=False, random_state=0):
+        start = time.time()
         self.random_state = random_state
         random.seed(self.random_state)
         self.graphs = graphs
@@ -47,6 +48,7 @@ class Muturank_new:
         print "Performing clustering on monorelational network..."
         time1 = time.time()
         self.dynamic_coms = self.clustering()
+        self.duration = str(datetime.timedelta(seconds=int(time.time() - start)))
         print "Performed clustering in ", time.time()-time1, " seconds"
         """print sum(self.p_new)
         print sum(self.q_new)
@@ -55,7 +57,6 @@ class Muturank_new:
         # self.check_probs()
         # print self.w.toarray()
         # print self.q_new
-
 
     def create_adj_tensor(self, graphs):
         """
@@ -529,6 +530,7 @@ class Muturank_new:
     def check_irr_w(self):
         """
         Checks the matrix w for irreducibility.
+        """
         edges = []
         count = 0
         for i in range(self.w.shape[0]):
@@ -564,7 +566,6 @@ if __name__ == '__main__':
     #     1: [(1,1), (2,2), (3,3)],
     #     2: [(1,1), (2,2), (3,3)]
     # }
-
     graphs = {}
     for i, edges in edges.items():
         graphs[i] = nx.Graph(edges)
@@ -575,4 +576,5 @@ if __name__ == '__main__':
                             default_q=False)
     print mutu.a[0].toarray()
     print mutu.q_new
-    print mutu.p_new"""
+    print mutu.p_new
+    print mutu.duration

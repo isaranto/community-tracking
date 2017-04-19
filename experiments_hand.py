@@ -44,11 +44,11 @@ def run_experiments(data, ground_truth, network_num):
     mutu4 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one',
                         clusters=len(ground_truth), default_q=True)
     all_res.append(evaluate.get_results(ground_truth, mutu4.dynamic_coms, "Muturank with one connection - default q" , mutu4.tfs,
-                                        eval="dynamic"))
+                                        eval="dynamic", duration = mutu4.duration))
     all_res.append(evaluate.get_results(ground_truth, mutu4.dynamic_coms, "Muturank with one connection - default q" , mutu4.tfs,
-                                        eval="sets"))
+                                        eval="sets", duration = mutu4.duration))
     all_res.append(evaluate.get_results(ground_truth, mutu4.dynamic_coms, "Muturank with one connection - default q" , mutu4.tfs,
-                                        eval="per_tf"))
+                                        eval="per_tf", duration = mutu4.duration))
     # Muturank with all connections - default q
     mutu5 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='all',
                         clusters=len(ground_truth), default_q=True)
@@ -237,6 +237,7 @@ if __name__ == "__main__":
         results['Bcubed-Precision'] = []
         results['Bcubed-Recall'] = []
         results['Bcubed-F1'] = []
+        results['Duration'] = []
         for res in all_res:
             for k, v in res.iteritems():
                 results[k].extend(v)

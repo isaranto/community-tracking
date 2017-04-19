@@ -7,10 +7,13 @@ from copy import deepcopy
 from scipy import sparse
 from sklearn.cluster import spectral_clustering
 import pprint
+import time
+import datetime
 
 
 class TensorFact:
     def __init__(self, graphs, num_of_coms, threshold, seeds=20, overlap=True, original_graphs=None):
+        start = time.time()
         self.overlap = overlap
         # original graphs only used when performing NNTF on Timerank tensor
         self.orig_graphs = original_graphs
@@ -30,6 +33,7 @@ class TensorFact:
         # self.tensor = self.create_dtensor(graphs)
         self.A, self.B, self.C = self.nnfact_repeat(seeds)
         self.dynamic_coms = self.get_comms(self.A, self.B, self.C)
+        self.duration = str(datetime.timedelta(seconds=int(time.time() - start)))
         self. timeline = self.get_timeline(self.C)
         print "communities: ",
         pprint.pprint(self.dynamic_coms, indent=2, width=80)
