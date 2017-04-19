@@ -95,7 +95,7 @@ def run_experiments(data, ground_truth, network_num):
     f.close()
 
     # NNTF
-    fact = TensorFact(data.graphs, num_of_coms=len(ground_truth), threshold=1e-4, seeds=1, overlap=False)
+    fact = TensorFact(data.graphs, num_of_coms=len(ground_truth), threshold=1e-4, seeds=10, overlap=False)
     all_res.append(evaluate.get_results(ground_truth, fact.dynamic_coms, "NNTF", mutu6.tfs, eval="dynamic",
                                         duration=fact.duration))
     all_res.append(evaluate.get_results(ground_truth, fact.dynamic_coms, "NNTF", mutu6.tfs, eval="sets",
