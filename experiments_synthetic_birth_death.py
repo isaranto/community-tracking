@@ -221,9 +221,15 @@ def run_experiments(data, ground_truth, network_num):
 
 
 if __name__=="__main__":
+    import sys
+
+    if len(sys.argv) > 1:
+        folder = sys.argv[1]
+    else:
+        folder = "birth_death_data"
     from os.path import expanduser
     home = expanduser("~")
-    path_full = home+"/Dropbox/Msc/thesis/data/synthetic_generator/data/birth_death_data"
+    path_full = home+"/Dropbox/Msc/thesis/data/synthetic_generator/data/"+folder
     results_file = "results_synthetic_"+path_full.split("/")[-1]+".txt"
     sd = SyntheticDataConverter(path_full)
     # nodes = sd.graphs[0].nodes()
