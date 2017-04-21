@@ -75,7 +75,7 @@ class dblp_parser:
 
 class dblp_loader:
     def __init__(self, _file, start_year, end_year, conf_file='../data/dblp/confs.txt',
-                 coms='comp', new_file=None ):
+                 coms='comp', new_file=None):
         with open(_file, 'r')as fp:
             # load json and convert year-keys to int
             self.data = {int(k): v for k, v in json.load(fp).items()}
@@ -320,6 +320,9 @@ class dblp_loader:
 
 
 if __name__ == '__main__':
+    # from os.path import expanduser
+    # home = expanduser("~")
+    # path_full = home + "/Dropbox/Msc/thesis/data/synthetic_generator/data/birth_death_data"
     filename = "../data/dblp/my_dblp_data.json"
     try:
         with open('../data/dblp/dblp.pkl', 'rb')as fp:
