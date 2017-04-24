@@ -1,9 +1,16 @@
 import os
 import networkx as nx
 
-#TODO: get rid of false events
+
 class SyntheticDataConverter:
-    def __init__(self, filePath):
+    def __init__(self, filePath, remove_redundant_nodes=False):
+        """
+        remove_redundant_nodes refers to nodes that exist in the graph-timeframe without belonging to a community
+        we introduce this as an option to remove the noise injected in the network by such nodes.
+        :param filePath:
+        :param remove_s:
+        :return:
+        """
         if not filePath.endswith("/"):
             self.filePath = filePath+"/"
         else:
@@ -23,8 +30,8 @@ class SyntheticDataConverter:
         self.event_file = [item for item in sorted(files) if item.endswith('events')]
         self.timeline_file = [item for item in sorted(files) if item.endswith('timeline')]
         self.timeFrames = len(self.edges_files)
-        self.edges = self.get_edges()
-        self.comms = self.get_comms()
+        self.comms, nodes = self.get_comms()
+        self.edges = self.get_edges(nodes, remove_redundant_nodes)
         self.events = self.get_events()
         self.graphs = {}
         for i in range(self.timeFrames):
@@ -34,14 +41,19 @@ class SyntheticDataConverter:
         self.dynamic_truth = self.get_dynamic_coms()
 
 
-
-    def get_edges(self):
+    def get_edges(self, nodes, remove_redundant_nodes):
         edge_time = {}
         for i, e_file in enumerate(self.edges_files):
             edge_time[i] = []
             with open(self.filePath+e_file, 'r') as fp:
                 for line in fp:
-                    edge_time[i].append((int(line.split()[0]), int(line.split()[1])))
+                    n1 = int(line.split()[0])
+                    n2 = int(line.split()[1])
+                    if remove_redundant_nodes:
+                        if (n1 in nodes[i]) and (n2 in nodes[i]):
+                            edge_time[i].append((n1, n2))
+                    else:
+                        edge_time[i].append((n1, n2))
         return edge_time
 
     def add_self_edges(self):
@@ -50,14 +62,18 @@ class SyntheticDataConverter:
                 graph.add_edge(v, v)
 
     def get_comms(self):
+        all_nodes = { i :set() for i in range(self.timeFrames)}
         com_time = {}
         for timeFrame, c_file in enumerate(self.comm_files):
             with open(self.filePath+c_file, 'r') as fp:
                 comms = {}
                 for j, line in enumerate(fp):
-                    comms[int(j)] = [int(node) for node in line.split()]
+                    comms[int(j)] = []
+                    for node in line.split():
+                        comms[int(j)].append(int(node))
+                        all_nodes[timeFrame].add(int(node))
             com_time[int(timeFrame)] = comms
-        return com_time
+        return com_time, all_nodes
 
     def get_events(self):
         events = {}
