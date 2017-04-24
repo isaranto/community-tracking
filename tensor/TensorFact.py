@@ -138,11 +138,12 @@ class TensorFact:
         return A, B, C, error
 
     def get_comms(self, A, B, C):
-        #FIXME : universal solution for communities
 
         """
         Return communities in a dict of the form { com_id : [list with node_ids that
-        belong to the community}
+        belong to the community} If overlap is set to False we find the argmax of each row in A (the community with
+         higher value) and put the corresponding node in that community, if argmax of B for the same row is a
+         different community, we put that node in that community also (so we have a minor ovelap)
         :param A:
         :param B:
         :param C:
@@ -158,12 +159,25 @@ class TensorFact:
                         except KeyError:
                             comms[c] = [self.node_ids[u]]
             else:
-                c = np.argmax(A[u, :])
-                if A[u, c] > self.thres:
-                        try:
-                            comms[c].append(self.node_ids[u])
-                        except KeyError:
-                            comms[c] = [self.node_ids[u]]
+                c_a = np.argmax(A[u, :])
+                c_b = np.argmax(B[u, :])
+                if c_a == c_b:
+                    if A[u, c_a] > self.thres:
+                            try:
+                                comms[c_a].append(self.node_ids[u])
+                            except KeyError:
+                                comms[c_a] = [self.node_ids[u]]
+                else:
+                    if A[u, c_a] > self.thres:
+                            try:
+                                comms[c_a].append(self.node_ids[u])
+                            except KeyError:
+                                comms[c_a] = [self.node_ids[u]]
+                    if B[u, c_b] > self.thres:
+                            try:
+                                comms[c_b].append(self.node_ids[u])
+                            except KeyError:
+                                comms[c_b] = [self.node_ids[u]]
         dynamic_coms ={}
         for i, com in comms.iteritems():
             for tf, G in self.graphs.iteritems():
@@ -230,7 +244,7 @@ if __name__ == '__main__':
     graphs = {}
     for i, edges in edges.items():
         graphs[i] = nx.Graph(edges)
-    fact = TensorFact(graphs, num_of_coms=3, seeds=1, threshold=1e-4,original_graphs=graphs)
+    fact = TensorFact(graphs, num_of_coms=3, seeds=1, threshold=1e-4,original_graphs=graphs, overlap=False)
     from metrics import Omega
     print Omega(fact.dynamic_coms, fact.dynamic_coms).omega_score
     from metrics import NMI
