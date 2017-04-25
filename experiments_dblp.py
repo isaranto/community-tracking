@@ -12,6 +12,7 @@ from collections import OrderedDict
 import time
 import json
 from tabulate import tabulate
+import datetime
 import pprint
 
 
@@ -130,13 +131,14 @@ def run_experiments(data, ground_truth, network_num):
     with open(outfile, 'w')as f:
         for hypergraph in tracker.hypergraphs:
             hypergraph.calculateEvents(f)
-    print "--- %s seconds ---" % (time.time() - start_time)
+    ged_time = str(datetime.timedelta(seconds=int(time.time() - start_time)))
+    print "--- %s seconds ---" % (ged_time)
     ged = ReadGEDResults.ReadGEDResults(file_coms=ged_data.fileName, file_output=outfile)
     with open(results_file, 'a') as f:
         f.write("GED\n")
         pprint.pprint(ged.dynamic_coms, stream=f, width=150)
-    all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED", mutu6.tfs, eval="dynamic"))
-    all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED", mutu6.tfs, eval="sets"))
+    all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED", mutu6.tfs, eval="dynamic", duration=ged_time))
+    all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED", mutu6.tfs, eval="sets", duration=ged_time))
     f = open(results_file, 'a')
     f.write(tabulate(all_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
     f.close()

@@ -13,6 +13,7 @@ import time
 import json
 from tabulate import tabulate
 import pprint
+import datetime
 
 
 
@@ -130,13 +131,14 @@ def run_experiments(data, ground_truth, network_num):
     with open(outfile, 'w')as f:
         for hypergraph in tracker.hypergraphs:
             hypergraph.calculateEvents(f)
-    print "--- %s seconds ---" % (time.time() - start_time)
+    ged_time = str(datetime.timedelta(seconds=int(time.time() - start_time)))
+    print "--- %s seconds ---" % (ged_time)
     ged = ReadGEDResults.ReadGEDResults(file_coms=ged_data.fileName, file_output=outfile)
     with open(results_file, 'a') as f:
         f.write("GED\n")
         pprint.pprint(ged.dynamic_coms, stream=f, width=150)
-    all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED", mutu6.tfs, eval="dynamic"))
-    all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED", mutu6.tfs, eval="sets"))
+    all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED", mutu6.tfs, eval="dynamic", duration=ged_time))
+    all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED", mutu6.tfs, eval="sets", duration=ged_time))
     f = open(results_file, 'a')
     f.write(tabulate(all_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
     f.close()
@@ -219,7 +221,6 @@ def run_experiments(data, ground_truth, network_num):
     return all_res
 
 
-
 if __name__=="__main__":
     import sys
 
@@ -241,7 +242,7 @@ if __name__=="__main__":
     data = Data(comms=sd.comms, graphs=sd.graphs, timeFrames=len(sd.graphs), number_of_dynamic_communities=len(
         sd.dynamic_truth), dynamic_truth=sd.dynamic_truth)
     #  ---------------------------------
-    #Dynamic Network Generator data (50 nodes/3 tfs) - Same network everywhere except one tf
+    # Dynamic Network Generator data (50 nodes/3 tfs) - Same network everywhere except one tf
     # dict = {
     #     0: sd.graphs[0],
     #     1: sd.graphs[0],
@@ -258,8 +259,8 @@ if __name__=="__main__":
     # data = Data(dblp.communities, dblp.graphs, len(dblp.graphs), len(dblp.dynamic_coms))
     # ground_truth = dblp.dynamic_coms
     # ---------------------------------
-    #from plot import PlotGraphs
-    #PlotGraphs(data.graphs, len(data.graphs), 'expand-contract', 100)
+    # from plot import PlotGraphs
+    # PlotGraphs(data.graphs, len(data.graphs), 'expand-contract', 100)
     all_res = run_experiments(data, data.dynamic_truth, 'birth')
     results = OrderedDict()
     results["Method"] = []
