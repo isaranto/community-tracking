@@ -98,19 +98,20 @@ class TensorFact:
         seed_list = np.random.randint(0, 4294967295, num_of_seeds)
         min_error = 1
         for seed in seed_list:
-            A, B, C, error = self.tensor_decomp(seed)
-            if error <= min_error:
+            A_r, B_r, C_r, error_r = self.tensor_decomp(seed)
+            if error_r <= min_error:
                 best_seed = seed
-                min_error= error
+                min_error = error_r
         # run once with the custom clustering initialized A factor
-        A, B, C, error = self.tensor_decomp(best_seed, random_init=False)
+        A_c, B_c, C_c, error_c = self.tensor_decomp(best_seed, random_init=False)
         # if it doesnt give better results, run with best seed
-        if error > min_error:
-            A, B, C, error = self.tensor_decomp(best_seed)
+        if error_c > min_error:
+            A, B, C, error = A_r, B_r, C_r, error_r
             self.error = error
             self.best_seed =best_seed
             print "Error = ", error, " seed: ", best_seed
         else:
+            A, B, C, error = A_c, B_c, C_c, error_c
             self.error = error
             self.best_seed = best_seed
             print "Error = ", error, "with Custom init", ", seed: ", best_seed
