@@ -221,8 +221,7 @@ def run_experiments(data, ground_truth, network_num):
     return all_res
 
 
-
-if __name__=="__main__":
+if __name__ == "__main__":
     from os.path import expanduser
     home = expanduser("~")
     path_full = home+"/Dropbox/Msc/thesis/data/dblp/1"
@@ -230,12 +229,22 @@ if __name__=="__main__":
     print results_file
     dblp = dblp_loader(path_full+"/my_dblp_data.json", conf_file=path_full+"/confs.txt", start_year=2006,
                        end_year=2010, coms='comp')
+    # for t in dblp.graphs.keys():
+    #     print nx.number_of_nodes(dblp.graphs[t]),
+    #     new_edges = []
+    #     for conf, graph in dblp.conf_graphs[t].iteritems():
+    #         new_edges.extend(graph.edges())
+    #     print nx.number_of_nodes(nx.Graph(new_edges))
+    # print(len(set(item for sublist in [g.nodes() for _, g in dblp.graphs.items()] for item in sublist)))
     for t in dblp.graphs.keys():
-        print nx.number_of_nodes(dblp.graphs[t])
+        print(len([node for _,com in dblp.communities[t].iteritems() for node in com])),
         new_edges = []
         for conf, graph in dblp.conf_graphs[t].iteritems():
             new_edges.extend(graph.edges())
         print nx.number_of_nodes(nx.Graph(new_edges))
+    print "Total",
+    print(len([node for t in dblp.graphs.keys() for _, com in dblp.communities[t].iteritems() for node in com])),
+    print(len(set(item for sublist in [g.nodes() for _, g in dblp.graphs.items()] for item in sublist)))
     number_of_dynamic_communities = len(dblp.dynamic_coms)
     data = Data(dblp.communities, dblp.graphs, len(dblp.graphs), len(dblp.dynamic_coms), dblp.dynamic_coms)
     #from plot import PlotGraphs
