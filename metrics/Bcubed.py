@@ -4,9 +4,15 @@ class Bcubed:
     def __init__(self, truth, coms):
         self.ground_truth = self.process_input(truth)
         self.communities = self.process_input(coms)
-        self.precision = bcubed.precision(self.communities, self.ground_truth)
-        self.recall = bcubed.recall(self.communities, self.ground_truth)
-        self.fscore = bcubed.fscore(self.precision, self.recall)
+        # FIXME: fix keyerror for nodes not in ground truth
+        try:
+            self.precision = bcubed.precision(self.communities, self.ground_truth)
+            self.recall = bcubed.recall(self.communities, self.ground_truth)
+            self.fscore = bcubed.fscore(self.precision, self.recall)
+        except KeyError:
+            self.precision = 0
+            self.recall = 0
+            self.fscore = 0
 
     def process_input(self, coms):
         itemset = {}

@@ -258,6 +258,7 @@ if __name__ == "__main__":
     results['Bcubed-Precision'] = []
     results['Bcubed-Recall'] = []
     results['Bcubed-F1'] = []
+    results['Duration'] = []
     for res in all_res:
         for k, v in res.iteritems():
             results[k].extend(v)
