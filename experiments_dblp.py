@@ -245,7 +245,7 @@ if __name__ == "__main__":
     print "Total",
     print(len([node for t in dblp.graphs.keys() for _, com in dblp.communities[t].iteritems() for node in com])),
     print(len(set(item for sublist in [g.nodes() for _, g in dblp.graphs.items()] for item in sublist)))
-    print "# of dynamic communities", len(dblp.dynamic_truth)
+    print "# of dynamic communities", len(dblp.dynamic_coms)
     number_of_dynamic_communities = len(dblp.dynamic_coms)
     data = Data(dblp.communities, dblp.graphs, len(dblp.graphs), len(dblp.dynamic_coms), dblp.dynamic_coms)
     pprint.pprint(data.graphs.keys())
