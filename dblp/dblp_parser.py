@@ -82,7 +82,7 @@ class dblp_loader:
         self.conf_list = self.read_conf_list(conf_file)
         self.edges = self.get_edges(start_year, end_year)
         self.graphs = self.get_graphs(start_year, end_year)
-        self.timeFrames = range(start_year, end_year+1)
+        self.timeFrames = len(range(start_year, end_year+1))
         # self.communities = self.get_comms(start_year, end_year)
         conf_edges = self.get_conf_edges(start_year, end_year)
         self.conf_graphs = self.get_conf_graphs(conf_edges)
@@ -138,12 +138,12 @@ class dblp_loader:
 
     def get_conf_graphs(self, conf_edges):
         graphs = {}
-        for year, confs in conf_edges.iteritems():
+        for tf, (year, confs) in enumerate(conf_edges.iteritems()):
             for conf, edges in confs.iteritems():
                 try:
-                    graphs[int(year)][conf] = nx.Graph(edges)
+                    graphs[int(tf)][conf] = nx.Graph(edges)
                 except KeyError:
-                    graphs[int(year)] = {conf: nx.Graph(edges)}
+                    graphs[int(tf)] = {conf: nx.Graph(edges)}
         return graphs
 
     """def get_comms(self, start_year, end_year):
@@ -169,8 +169,8 @@ class dblp_loader:
 
     def get_graphs(self, start_year, end_year):
         graphs = {}
-        for year in range(start_year, end_year+1):
-            graphs[year] = nx.Graph(self.edges[year])
+        for tf, year in enumerate(range(start_year, end_year+1)):
+            graphs[tf] = nx.Graph(self.edges[year])
         return graphs
 
     def read_conf_list(self, conf_file):
@@ -188,7 +188,7 @@ class dblp_loader:
         :return:
         """
         com_time = {}
-        for year in range(start_year, end_year+1):
+        for tf, year in enumerate(range(start_year, end_year+1)):
             # for year, confs in self.data.iteritems():
             comms = {}
             for j, conf in enumerate(self.conf_list, 1):
@@ -206,7 +206,7 @@ class dblp_loader:
                     continue
                 else:
                     comms[j] = com
-            com_time[year] = comms
+            com_time[tf] = comms
         return com_time
 
     def get_cc_com(self):
