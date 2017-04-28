@@ -196,6 +196,31 @@ def run_experiments(data, ground_truth, network_num):
     all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED", mutu6.tfs, eval="dynamic"))
     all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED", mutu6.tfs, eval="sets"))
     all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED", mutu6.tfs, eval="per_tf"))
+    # GED with timerank communities
+    # GED
+    import sys
+    sys.path.insert(0, '../GED/')
+    import preprocessing, Tracker
+    start_time = time.time()
+    from ged import GedWrite, ReadGEDResults
+    ged_data = GedWrite(Data(mutu1.comms, data.graphs, len(graphs), len(mutu1.dynamic_coms), mutu1.dynamic_coms))
+    graphs = preprocessing.getGraphs(ged_data.fileName)
+    tracker = Tracker.Tracker(graphs)
+    tracker.compare_communities()
+    #outfile = 'tmpfiles/ged_results.csv'
+    outfile = './results/GED-events-handdrawn-'+str(network_num)+'.csv'
+    with open(outfile, 'w')as f:
+        for hypergraph in tracker.hypergraphs:
+            hypergraph.calculateEvents(f)
+    print "--- %s seconds ---" % (time.time() - start_time)
+    ged = ReadGEDResults.ReadGEDResults(file_coms=ged_data.fileName, file_output=outfile)
+    with open('results_hand.txt', 'a') as f:
+        f.write("GED\n")
+        pprint.pprint(ged.dynamic_coms, stream=f, width=150)
+    all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED - with Timerank comms", mutu6.tfs,
+                                        eval="dynamic"))
+    all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED - with Timerank comms", mutu6.tfs, eval="sets"))
+    all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED - with Timerank comms", mutu6.tfs, eval="per_tf"))
     return all_res
 
 

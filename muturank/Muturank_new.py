@@ -47,7 +47,7 @@ class Muturank_new:
         print "Created monorelational in ", time.time()-time1, " seconds"
         print "Performing clustering on monorelational network..."
         time1 = time.time()
-        self.dynamic_coms = self.clustering()
+        self.dynamic_coms, self.comms = self.clustering()
         self.duration = str(datetime.timedelta(seconds=int(time.time() - start)))
         print "Performed clustering in ", time.time()-time1, " seconds"
         """print sum(self.p_new)
@@ -57,6 +57,9 @@ class Muturank_new:
         # self.check_probs()
         # print self.w.toarray()
         # print self.q_new
+        import pprint
+        pprint.pprint(self.comms)
+        pprint.pprint(self.dynamic_coms)
 
     def create_adj_tensor(self, graphs):
         """
@@ -440,7 +443,6 @@ class Muturank_new:
         :return: Dynamic communities
         """
         print "running spectral"
-        # # TODO: how to obtain # of communities
         # from scipy.sparse.linalg import eigs
         # print np.all(eigs(self.w) > 0)
         # clusters = SpectralClustering(affinity='precomputed',n_clusters=self.clusters,
@@ -460,17 +462,21 @@ class Muturank_new:
             com_time[t] = comms"""
         print "saving communities"
         comms = {}
-        com_time = {}
+        com_time = {tf: {c: [] for c in range(self.clusters)} for tf in range(self.tfs)}
         for n, c in enumerate(clusters):
             try:
                 tf = n // self.num_of_nodes
                 node = n % self.num_of_nodes
                 if self.has_node(tf, node):
+                    com_time[tf][c].append(self.node_ids[node])
                     comms[c].append(str(self.node_ids[node])+"-t"+str(tf))
-                    #com_time[tf] = []
             except KeyError:
                 comms[c] = [str(self.node_ids[node])+"-t"+str(tf)]
-        return comms
+        # delete empty coms
+        com_time = dict((k, dict((k1, v1) for k1, v1 in v.iteritems() if v1)) for k, v in com_time.iteritems())
+        com_time = dict((k, dict((i, v1) for i, (k1, v1) in enumerate(v.iteritems()) if v1)) for k,
+                                                                                            v in com_time.iteritems())
+        return comms, com_time
 
     def check_probs(self):
         """
