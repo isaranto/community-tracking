@@ -1,7 +1,7 @@
 from __future__ import division
 import networkx as nx
 import numpy as np
-from sktensor import sptensor, dtensor, ktensor, cp_als
+from sktensor import sptensor, dtensor
 import ncp
 from copy import deepcopy
 from scipy import sparse

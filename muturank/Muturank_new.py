@@ -449,7 +449,9 @@ class Muturank_new:
         #                                random_state=self.random_state, eigen_solver='arpack').fit_predict(self.w)
         clusters = spectral_clustering(self.w, n_clusters=self.clusters,
                                        random_state=self.random_state, eigen_solver='arpack')
-        #clusters = k_means(self.w, n_clusters=self.clusters, n_init=10)
+        # from sklearn.cluster import KMeans
+        # clusters = KMeans(n_clusters=self.clusters, n_init=10, max_iter=1000).fit_predict(self.w)
+        # print clusters
         """com_time = {}
         for t in range(self.tfs):
             comms = {}
