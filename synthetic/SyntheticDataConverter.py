@@ -62,7 +62,7 @@ class SyntheticDataConverter:
                 graph.add_edge(v, v)
 
     def get_comms(self):
-        all_nodes = { i :set() for i in range(self.timeFrames)}
+        all_nodes = {i: set() for i in range(self.timeFrames)}
         com_time = {}
         for timeFrame, c_file in enumerate(self.comm_files):
             with open(self.filePath+c_file, 'r') as fp:

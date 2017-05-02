@@ -232,7 +232,7 @@ if __name__=="__main__":
     home = expanduser("~")
     path_full = home+"/Dropbox/Msc/thesis/data/synthetic_generator/data/"+folder
     results_file = "results_synthetic_"+path_full.split("/")[-1]+".txt"
-    sd = SyntheticDataConverter(path_full, remove_redundant_nodes=False)
+    sd = SyntheticDataConverter(path_full, remove_redundant_nodes=True)
     # nodes = sd.graphs[0].nodes()
     # # edges_1 = random.sample(list(combinations_with_replacement(nodes, 2)), 50)
     # # edges_2 = random.sample(list(combinations_with_replacement(nodes, 2)), 207)
