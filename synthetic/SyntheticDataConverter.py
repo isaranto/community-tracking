@@ -8,7 +8,7 @@ class SyntheticDataConverter:
         remove_redundant_nodes refers to nodes that exist in the graph-timeframe without belonging to a community
         we introduce this as an option to remove the noise injected in the network by such nodes.
         :param filePath:
-        :param remove_s:
+        :param remove_redundant_nodes:
         :return:
         """
         if not filePath.endswith("/"):
@@ -39,7 +39,6 @@ class SyntheticDataConverter:
         self.add_self_edges()
         self.timeline = self.get_timeline()
         self.dynamic_truth = self.get_dynamic_coms()
-
 
     def get_edges(self, nodes, remove_redundant_nodes):
         edge_time = {}
@@ -97,7 +96,6 @@ class SyntheticDataConverter:
         :return:
         """
         dyn_communities = {}
-        # TODO maybe we can use OrderedDict if appropriate
         for i, _file in enumerate(self.timeline_file):
             with open(self.filePath+_file, 'r') as fp:
                 for line in fp:

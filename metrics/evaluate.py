@@ -3,10 +3,12 @@ import NMI, Omega, Bcubed
 from collections import Counter, OrderedDict
 import itertools
 
+
 def unravel_tf(dynamic, tfs_len):
     """
-    Dictionary of dynamic communities
-    :param comms:
+    
+    :param dynamic: 
+    :param tfs_len: 
     :return: dictionary of dictionaries {timeframe:
                                                 {
                                                 community: [node1, node2...]}}
@@ -22,6 +24,7 @@ def unravel_tf(dynamic, tfs_len):
                 comms[tf][c] = [node]
     return remove_duplicate_coms(comms)
 
+
 def remove_duplicate_coms(communities):
     """
     Removes duplicates from list of lists
@@ -31,10 +34,11 @@ def remove_duplicate_coms(communities):
     new_comms = {tf: {} for tf in communities.keys()}
     for tf, comms in communities.iteritems():
         unique_coms = [set(c) for c in comms.values()]
-        unique_coms = list(comms for comms,_ in itertools.groupby(unique_coms))
+        unique_coms = list(comms for comms, _ in itertools.groupby(unique_coms))
         for i, com in enumerate(unique_coms):
             new_comms[tf][i] = list(com)
     return new_comms
+
 
 def evaluate(ground_truth, method, name, eval, duration):
     nmi = NMI.NMI(ground_truth, method).results
@@ -51,7 +55,8 @@ def evaluate(ground_truth, method, name, eval, duration):
     results['Duration'] = [duration]
     return results
 
-def get_results(ground_truth, method, name, tfs_len, eval="dynamic", duration = 0):
+
+def get_results(ground_truth, method, name, tfs_len, eval="dynamic", duration=0):
     if eval == "dynamic":
         results = evaluate(ground_truth, method, name, eval, duration)
     elif eval == "sets":
@@ -76,28 +81,28 @@ def get_results(ground_truth, method, name, tfs_len, eval="dynamic", duration = 
                 results[key] = [results[key][0]]
             else:
                 results[key] = [sum(results[key])/len(per_tf)]
-        #pprint.pprint(dict(f))
+        # pprint.pprint(dict(f))
         # for k, v in res.iteritems():
         #     print "KEY ", k, " VALUE ", v
     return results
 
 if __name__ == "__main__":
-    comms3 = {0: ['1-t0','2-t0', '3-t0','4-t0', '1-t1', '2-t1',  '3-t1','4-t1', '1-t2','2-t2','3-t2','4-t2'],
-                1: ['11-t1', '12-t1', '13-t1'],
-            2: ['5-t2', '6-t2', '7-t2','5-t0', '6-t0', '7-t0']}
-    comms4 = {1: ['1-t0','2-t0', '3-t0','4-t0', '1-t1', '2-t1',  '3-t1','4-t1', '1-t2','2-t2','3-t2','4-t2'],
+    comms3 = {0: ['1-t0', '2-t0', '3-t0', '4-t0', '1-t1', '2-t1',  '3-t1', '4-t1', '1-t2', '2-t2', '3-t2', '4-t2'],
+              1: ['11-t1', '12-t1', '13-t1'],
+              2: ['5-t2', '6-t2', '7-t2', '5-t0', '6-t0', '7-t0']}
+    comms4 = {1: ['1-t0', '2-t0', '3-t0', '4-t0', '1-t1', '2-t1',  '3-t1', '4-t1', '1-t2', '2-t2', '3-t2','4-t2'],
               2: ['11-t1', '12-t1', '13-t1'],
               3: ['5-t2', '6-t2', '7-t2'],
               4: ['5-t0', '6-t0', '7-t0']}
-    comms5 = { 5: ['5-t0', '6-t0', '7-t0'],
-            1: ['1-t0','2-t0', '3-t0','4-t0', '1-t1', '2-t1',  '3-t1','4-t1', '1-t2','2-t2','3-t2','4-t2'],
-              2: ['11-t1', '12-t1', '13-t1','5-t0', '6-t0', '7-t0'],
-              3: [ '5-t0', '6-t0', '7-t0', '5-t2', '6-t2', '7-t2'],
-            4:['5-t0', '7-t0','6-t0', ]}
+    comms5 = {5: ['5-t0', '6-t0', '7-t0'],
+              1: ['1-t0', '2-t0', '3-t0', '4-t0', '1-t1', '2-t1',  '3-t1', '4-t1', '1-t2', '2-t2', '3-t2', '4-t2'],
+              2: ['11-t1', '12-t1', '13-t1', '5-t0', '6-t0', '7-t0'],
+              3: ['5-t0', '6-t0', '7-t0', '5-t2', '6-t2', '7-t2'],
+              4: ['5-t0', '7-t0', '6-t0', ]}
     all_res = []
-    all_res.append(get_results(comms4, comms5, "Muturank" , 3, eval="dynamic"))
-    all_res.append(get_results(comms4, comms5, "Muturank" , 3, eval="sets"))
-    all_res.append(get_results(comms4, comms5, "Muturank" , 3, eval="per_tf"))
+    all_res.append(get_results(comms4, comms5, "Muturank", 3, eval="dynamic"))
+    all_res.append(get_results(comms4, comms5, "Muturank", 3, eval="sets"))
+    all_res.append(get_results(comms4, comms5, "Muturank", 3, eval="per_tf"))
     results = OrderedDict()
     results["Method"] = []
     results['Eval'] = []
