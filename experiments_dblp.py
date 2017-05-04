@@ -236,14 +236,15 @@ if __name__ == "__main__":
     #         new_edges.extend(graph.edges())
     #     print nx.number_of_nodes(nx.Graph(new_edges))
     # print(len(set(item for sublist in [g.nodes() for _, g in dblp.graphs.items()] for item in sublist)))
-    for t in dblp.graphs.keys():
-        print(len([node for _,com in dblp.communities[t].iteritems() for node in com])),
-        new_edges = []
-        for conf, graph in dblp.conf_graphs[t].iteritems():
-            new_edges.extend(graph.edges())
-        print nx.number_of_nodes(nx.Graph(new_edges))
+    for tf, year in enumerate(dblp.communities.keys()):
+        print len(dblp.all_nodes[tf]), len(set([node for _, com in dblp.communities[year].iteritems() for node in com])), nx.number_of_nodes(dblp.graphs[tf])
+        # print(len([node for _,com in dblp.communities[dblp.communities.keys()[t]].iteritems() for node in com])),
+        # new_edges = []
+        # for conf, graph in dblp.conf_graphs[dblp.conf_graphs.keys()[t]].iteritems():
+        #     new_edges.extend(graph.edges())
+        # print nx.number_of_nodes(nx.Graph(new_edges))
     print "Total",
-    print(len([node for t in dblp.graphs.keys() for _, com in dblp.communities[t].iteritems() for node in com])),
+    print(len([node for t in dblp.graphs.keys() for _, com in dblp.communities[dblp.communities.keys()[t]].iteritems() for node in com])),
     print(len(set(item for sublist in [g.nodes() for _, g in dblp.graphs.items()] for item in sublist)))
     print "# of dynamic communities", len(dblp.dynamic_coms)
     number_of_dynamic_communities = len(dblp.dynamic_coms)

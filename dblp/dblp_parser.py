@@ -88,7 +88,7 @@ class dblp_loader:
         self.conf_graphs = self.get_conf_graphs(conf_edges)
         if coms == 'comp':
             # Connected components (within conferences) are communities
-            self.communities, self.com_conf_map = self.get_cc_com()
+            self.communities, self.com_conf_map, self.all_nodes = self.get_cc_com()
             self.dynamic_coms = self.get_dynamic_coms()
         else:
             # conferences are communities
@@ -214,6 +214,7 @@ class dblp_loader:
         get communities that correspond to connected components
         :return:
         """
+        all_nodes = {i: set() for i in self.conf_graphs.keys()}
         com_time = {}
         # keep a seperate dictionary with the com_id -> conference_name bindings
         conference = {}
@@ -229,7 +230,10 @@ class dblp_loader:
                         com_id += 1
             com_time[year] = comms
             conference[year] = conf_map
-        return com_time, conference
+        for i, coms in com_time.iteritems():
+            for com in coms.values():
+                all_nodes[i].update(com)
+        return com_time, conference, all_nodes
 
     def get_stats(self):
         length = {}
@@ -329,6 +333,7 @@ if __name__ == '__main__':
             print "loading..."
             start = time.time()
             dblp = pickle.load(fp)
+            raise IOError
     except IOError:
         print "creating..."
         start = time.time()
