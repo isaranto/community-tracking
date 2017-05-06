@@ -229,6 +229,10 @@ if __name__ == "__main__":
     print results_file
     dblp = dblp_loader(path_full+"/my_dblp_data.json", conf_file=path_full+"/confs.txt", start_year=2006,
                        end_year=2010, coms='comp')
+    f = open(results_file, 'a')
+    for item in dblp.conf_list:
+        f.write("%s\n" % item)
+    f.close()
     # for t in dblp.graphs.keys():
     #     print nx.number_of_nodes(dblp.graphs[t]),
     #     new_edges = []
