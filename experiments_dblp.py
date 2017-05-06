@@ -53,21 +53,21 @@ def object_decoder(obj, num):
 
 def run_experiments(data, ground_truth, network_num):
     all_res = []
-    # Muturank with one connection - default q
-    mutu4 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one',
-                         clusters=len(ground_truth), default_q=True)
-    all_res.append(
-        evaluate.get_results(ground_truth, mutu4.dynamic_coms, "Muturank with one connection - default q", mutu4.tfs,
-                             eval="dynamic", duration=mutu4.duration))
-    all_res.append(
-        evaluate.get_results(ground_truth, mutu4.dynamic_coms, "Muturank with one connection - default q", mutu4.tfs,
-                             eval="sets", duration=mutu4.duration))
-    all_res.append(
-        evaluate.get_results(ground_truth, mutu4.dynamic_coms, "Muturank with one connection - default q", mutu4.tfs,
-                             eval="per_tf", duration=mutu4.duration))
-    f = open(results_file, 'a')
-    f.write(tabulate(all_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
-    f.close()
+    # # Muturank with one connection - default q
+    # mutu4 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one',
+    #                      clusters=len(ground_truth), default_q=True)
+    # all_res.append(
+    #     evaluate.get_results(ground_truth, mutu4.dynamic_coms, "Muturank with one connection - default q", mutu4.tfs,
+    #                          eval="dynamic", duration=mutu4.duration))
+    # all_res.append(
+    #     evaluate.get_results(ground_truth, mutu4.dynamic_coms, "Muturank with one connection - default q", mutu4.tfs,
+    #                          eval="sets", duration=mutu4.duration))
+    # all_res.append(
+    #     evaluate.get_results(ground_truth, mutu4.dynamic_coms, "Muturank with one connection - default q", mutu4.tfs,
+    #                          eval="per_tf", duration=mutu4.duration))
+    # f = open(results_file, 'a')
+    # f.write(tabulate(all_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
+    # f.close()
     # Muturank with all connections - default q
     mutu5 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='all',
                          clusters=len(ground_truth), default_q=True)
@@ -143,28 +143,28 @@ def run_experiments(data, ground_truth, network_num):
     f.write(tabulate(all_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
     f.close()
     #all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED", mutu6.tfs, eval="per_tf"))
-    # Run muturank - One connection
-    mutu1 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one',
-                         clusters=len(ground_truth), default_q=False)
-    all_res.append(evaluate.get_results(ground_truth, mutu1.dynamic_coms, "Muturank with one connection", mutu1.tfs,
-                                        eval="dynamic", duration=mutu1.duration))
-    all_res.append(evaluate.get_results(ground_truth, mutu1.dynamic_coms, "Muturank with one connection", mutu1.tfs,
-                                        eval="sets", duration=mutu1.duration))
-    all_res.append(evaluate.get_results(ground_truth, mutu1.dynamic_coms, "Muturank with one connection", mutu1.tfs,
-                                        eval="per_tf", duration=mutu1.duration))
-    f = open(results_file, 'a')
-    f.write(tabulate(all_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
-    f.close()
-    muturank_res = OrderedDict()
-    muturank_res["tf/node"] = ['t' + str(tf) for tf in mutu1.tfs_list]
-    for i, node in enumerate(mutu1.node_ids):
-        muturank_res[node] = [mutu1.p_new[tf * len(mutu1.node_ids) + i] for tf in range(mutu1.tfs)]
-    f = open(results_file, 'a')
-    f.write("ONE CONNECTION\n")
-    f.write(tabulate(muturank_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
-    f.write(tabulate(zip(['t' + str(tf) for tf in mutu1.tfs_list], mutu1.q_new), headers="keys",
-                     tablefmt="fancy_grid").encode('utf8') + "\n")
-    f.close()
+    # # Run muturank - One connection
+    # mutu1 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one',
+    #                      clusters=len(ground_truth), default_q=False)
+    # all_res.append(evaluate.get_results(ground_truth, mutu1.dynamic_coms, "Muturank with one connection", mutu1.tfs,
+    #                                     eval="dynamic", duration=mutu1.duration))
+    # all_res.append(evaluate.get_results(ground_truth, mutu1.dynamic_coms, "Muturank with one connection", mutu1.tfs,
+    #                                     eval="sets", duration=mutu1.duration))
+    # all_res.append(evaluate.get_results(ground_truth, mutu1.dynamic_coms, "Muturank with one connection", mutu1.tfs,
+    #                                     eval="per_tf", duration=mutu1.duration))
+    # f = open(results_file, 'a')
+    # f.write(tabulate(all_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
+    # f.close()
+    # muturank_res = OrderedDict()
+    # muturank_res["tf/node"] = ['t' + str(tf) for tf in mutu1.tfs_list]
+    # for i, node in enumerate(mutu1.node_ids):
+    #     muturank_res[node] = [mutu1.p_new[tf * len(mutu1.node_ids) + i] for tf in range(mutu1.tfs)]
+    # f = open(results_file, 'a')
+    # f.write("ONE CONNECTION\n")
+    # f.write(tabulate(muturank_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
+    # f.write(tabulate(zip(['t' + str(tf) for tf in mutu1.tfs_list], mutu1.q_new), headers="keys",
+    #                  tablefmt="fancy_grid").encode('utf8') + "\n")
+    # f.close()
 
     # Muturank with all connections
     mutu2 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='all',
@@ -211,8 +211,8 @@ def run_experiments(data, ground_truth, network_num):
                      tablefmt="fancy_grid").encode('utf8') + "\n")
     f.write("GROUND TRUTH\n")
     pprint.pprint(ground_truth, stream=f, width=150)
-    f.write("ONE CONNECTION\n")
-    pprint.pprint(mutu1.dynamic_coms, stream=f, width=150)
+    # f.write("ONE CONNECTION\n")
+    # pprint.pprint(mutu1.dynamic_coms, stream=f, width=150)
     f.write("ALL CONNECTIONS\n")
     pprint.pprint(mutu2.dynamic_coms, stream=f, width=150)
     f.write("NEXT CONNECTION\n")
@@ -267,4 +267,21 @@ if __name__ == "__main__":
             results[k].extend(v)
     f = open(results_file, 'a')
     f.write(tabulate(results, headers="keys", tablefmt="fancy_grid").encode('utf8')+"\n")
+    import pandas as pd
+    df = pd.DataFrame.from_dict(results)
+    del df["Duration"]
+    f.write("\\begin{table}[h!] \n\centering \n\\begin{tabular}{ |p{4cm}||p{2cm}|p{3cm}|p{2cm}|p{2cm}|p{2cm}|} "
+            "\n"
+            "\hline \n\multicolumn{6}{|c|}{Evaluation comparison} \\\\\n\hline\n Method& NMI & Omega Index & "
+            "BCubed Precision & BCubed Recall & BCubed F\\\\\n\hline\n")
+    for index, row in df.iterrows():
+        if row["Eval"] == "dynamic":
+            del row["Eval"]
+            f.write(str(row[0]))
+            for item in row[1:]:
+                f.write(" & " + str(item))
+            f.write(str("\\\\")+"\n")
+    f.write("\hline\n\end{tabular}\n\caption{Comparison of DBLP experiment } }"
+            "\n\label{table:results-network}\n\end{table}\n")
     f.close()
+

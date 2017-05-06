@@ -224,7 +224,7 @@ class dblp_loader:
             com_id = 1
             for conf_name, graph in confs.iteritems():
                 for com in list(nx.connected_components(graph)):
-                    if len(com) > 4:
+                    if len(com) > 3:
                         comms[com_id] = list(com)
                         conf_map[com_id] = conf_name
                         com_id += 1

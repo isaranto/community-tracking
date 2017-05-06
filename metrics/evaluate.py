@@ -47,11 +47,11 @@ def evaluate(ground_truth, method, name, eval, duration):
     results = OrderedDict()
     results["Method"] = [name]
     results["Eval"] = [eval]
-    results['NMI'] = [nmi['NMI<Max>']]
-    results['Omega'] = [omega.omega_score]
-    results['Bcubed-Precision'] = [bcubed.precision]
-    results['Bcubed-Recall'] = [bcubed.recall]
-    results['Bcubed-F1'] = [bcubed.fscore]
+    results['NMI'] = ["{0:.4f}".format(nmi['NMI<Max>'])]
+    results['Omega'] = ["{0:.4f}".format(omega.omega_score)]
+    results['Bcubed-Precision'] = ["{0:.4f}".format(bcubed.precision)]
+    results['Bcubed-Recall'] = ["{0:.4f}".format(bcubed.recall)]
+    results['Bcubed-F1'] = ["{0:.4f}".format(bcubed.fscore)]
     results['Duration'] = [duration]
     return results
 

@@ -43,41 +43,39 @@ def run_experiments(data, ground_truth, network_num):
     # Timerank with one connection - default q
     mutu4 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one',
                         clusters=len(ground_truth), default_q=True)
-    all_res.append(evaluate.get_results(ground_truth, mutu4.dynamic_coms, "Timerank with one connection - default q" , mutu4.tfs,
+    all_res.append(evaluate.get_results(ground_truth, mutu4.dynamic_coms, "Timerank-STC-Uni" , mutu4.tfs,
                                         eval="dynamic", duration = mutu4.duration))
-    all_res.append(evaluate.get_results(ground_truth, mutu4.dynamic_coms, "Timerank with one connection - default q" , mutu4.tfs,
+    all_res.append(evaluate.get_results(ground_truth, mutu4.dynamic_coms, "Timerank-STC-Uni" , mutu4.tfs,
                                         eval="sets", duration = mutu4.duration))
-    all_res.append(evaluate.get_results(ground_truth, mutu4.dynamic_coms, "Timerank with one connection - default q" , mutu4.tfs,
+    all_res.append(evaluate.get_results(ground_truth, mutu4.dynamic_coms, "Timerank-STC-Uni" , mutu4.tfs,
                                         eval="per_tf", duration = mutu4.duration))
     # Timerank with all connections - default q
     mutu5 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='all',
                         clusters=len(ground_truth), default_q=True)
-    all_res.append(evaluate.get_results(ground_truth, mutu5.dynamic_coms, "Timerank with all connections - default q"
+    all_res.append(evaluate.get_results(ground_truth, mutu5.dynamic_coms, "Timerank-AOC-Uni"
                                         , mutu5.tfs,
                                         eval="dynamic"))
-    all_res.append(evaluate.get_results(ground_truth, mutu5.dynamic_coms, "Timerank with all connections - default "
-                                                                          "q", mutu5.tfs,
+    all_res.append(evaluate.get_results(ground_truth, mutu5.dynamic_coms, "Timerank-AOC-Uni", mutu5.tfs,
                                         eval="sets"))
-    all_res.append(evaluate.get_results(ground_truth, mutu5.dynamic_coms, "Timerank with all connections - default "
-                                                                          "q", mutu5.tfs,
+    all_res.append(evaluate.get_results(ground_truth, mutu5.dynamic_coms, "Timerank-AOC-Uni", mutu5.tfs,
                                         eval="per_tf"))
     # Timerank with next connection - default q
     mutu6 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='next',
                         clusters=len(ground_truth), default_q=True)
-    all_res.append(evaluate.get_results(ground_truth, mutu6.dynamic_coms, "Timerank with next connection - default q"
+    all_res.append(evaluate.get_results(ground_truth, mutu6.dynamic_coms, "Timerank-NOC-Uni"
                                         , mutu6.tfs, eval="dynamic"))
-    all_res.append(evaluate.get_results(ground_truth, mutu6.dynamic_coms, "Timerank with next connection - default q",
+    all_res.append(evaluate.get_results(ground_truth, mutu6.dynamic_coms, "Timerank-NOC-Uni",
                                         mutu6.tfs, eval="sets"))
-    all_res.append(evaluate.get_results(ground_truth, mutu6.dynamic_coms, "Timerank with next connection - default q",
+    all_res.append(evaluate.get_results(ground_truth, mutu6.dynamic_coms, "Timerank-NOC-Uni",
                                         mutu6.tfs, eval="per_tf"))
     # Run Timerank - One connection
     mutu1 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='one',
                          clusters=len(ground_truth), default_q=False)
-    all_res.append(evaluate.get_results(ground_truth, mutu1.dynamic_coms, "Timerank with one connection", mutu1.tfs,
+    all_res.append(evaluate.get_results(ground_truth, mutu1.dynamic_coms, "Timerank-STC", mutu1.tfs,
                                         eval="dynamic"))
-    all_res.append(evaluate.get_results(ground_truth, mutu1.dynamic_coms, "Timerank with one connection", mutu1.tfs,
+    all_res.append(evaluate.get_results(ground_truth, mutu1.dynamic_coms, "Timerank-STC", mutu1.tfs,
                                         eval="sets"))
-    all_res.append(evaluate.get_results(ground_truth, mutu1.dynamic_coms, "Timerank with one connection", mutu1.tfs,
+    all_res.append(evaluate.get_results(ground_truth, mutu1.dynamic_coms, "Timerank-STC", mutu1.tfs,
                                         eval="per_tf"))
     muturank_res = OrderedDict()
     muturank_res["tf/node"] = ['t' + str(tf) for tf in mutu1.tfs_list]
@@ -93,11 +91,11 @@ def run_experiments(data, ground_truth, network_num):
     # Timerank with all connections
     mutu2 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='all',
                          clusters=len(ground_truth), default_q=False)
-    all_res.append(evaluate.get_results(ground_truth, mutu2.dynamic_coms, "Timerank with all connections", mutu2.tfs,
+    all_res.append(evaluate.get_results(ground_truth, mutu2.dynamic_coms, "Timerank-AOC", mutu2.tfs,
                                         eval="dynamic"))
-    all_res.append(evaluate.get_results(ground_truth, mutu2.dynamic_coms, "Timerank with all connections", mutu2.tfs,
+    all_res.append(evaluate.get_results(ground_truth, mutu2.dynamic_coms, "Timerank-AOC", mutu2.tfs,
                                         eval="sets"))
-    all_res.append(evaluate.get_results(ground_truth, mutu2.dynamic_coms, "Timerank with all connections", mutu2.tfs,
+    all_res.append(evaluate.get_results(ground_truth, mutu2.dynamic_coms, "Timerank-AOC", mutu2.tfs,
                                         eval="per_tf"))
     muturank_res = OrderedDict()
     muturank_res["tf/node"] = ['t' + str(tf) for tf in mutu2.tfs_list]
@@ -113,11 +111,11 @@ def run_experiments(data, ground_truth, network_num):
     # Timerank with next connection
     mutu3 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='next',
                          clusters=len(ground_truth), default_q=False)
-    all_res.append(evaluate.get_results(ground_truth, mutu3.dynamic_coms, "Timerank with next connection", mutu3.tfs,
+    all_res.append(evaluate.get_results(ground_truth, mutu3.dynamic_coms, "Timerank-NOC", mutu3.tfs,
                                         eval="dynamic"))
-    all_res.append(evaluate.get_results(ground_truth, mutu3.dynamic_coms, "Timerank with next connection", mutu3.tfs,
+    all_res.append(evaluate.get_results(ground_truth, mutu3.dynamic_coms, "Timerank-NOC", mutu3.tfs,
                                         eval="sets"))
-    all_res.append(evaluate.get_results(ground_truth, mutu3.dynamic_coms, "Timerank with next connection", mutu3.tfs,
+    all_res.append(evaluate.get_results(ground_truth, mutu3.dynamic_coms, "Timerank-NOC", mutu3.tfs,
                                         eval="per_tf"))
     muturank_res = OrderedDict()
     muturank_res["tf/node"] = ['t' + str(tf) for tf in mutu3.tfs_list]
@@ -193,9 +191,9 @@ def run_experiments(data, ground_truth, network_num):
     with open('results_hand.txt', 'a') as f:
         f.write("GED\n")
         pprint.pprint(ged.dynamic_coms, stream=f, width=150)
-    all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED", mutu6.tfs, eval="dynamic"))
-    all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED", mutu6.tfs, eval="sets"))
-    all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED", mutu6.tfs, eval="per_tf"))
+    all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED-T", mutu6.tfs, eval="dynamic"))
+    all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED-T", mutu6.tfs, eval="sets"))
+    all_res.append(evaluate.get_results(ground_truth, ged.dynamic_coms, "GED-T", mutu6.tfs, eval="per_tf"))
     # GED with timerank communities
     # GED
     import sys
@@ -268,4 +266,22 @@ if __name__ == "__main__":
                 results[k].extend(v)
         f = open('results_hand.txt', 'a')
         f.write(tabulate(results, headers="keys", tablefmt="fancy_grid").encode('utf8')+"\n")
+        import pandas as pd
+        df = pd.DataFrame.from_dict(results)
+        del df["Duration"]
+        f.write("\\begin{table}[h!] \n\centering \n\\begin{tabular}{ |p{4cm}||p{2cm}|p{3cm}|p{2cm}|p{2cm}|p{2cm}|} "
+                "\n"
+                "\hline \n\multicolumn{6}{|c|}{Evaluation comparison} \\\\\n\hline\n Method& NMI & Omega Index & "
+                "BCubed Precision & BCubed Recall & BCubed F\\\\\n\hline\n")
+        for index, row in df.iterrows():
+            if row["Eval"] == "dynamic":
+                del row["Eval"]
+                f.write(str(row[0]))
+                for item in row[1:]:
+                    f.write(" & " + str(item))
+                f.write(str("\\\\")+"\n")
+        f.write("\hline\n\end{tabular}\n\caption{Comparison of different frameworks on Hand-drawn Network \\# "
+                ""+str(hand_drawn[i]['id'])+
+                " illustrated in \\ref{fig: network"+str(hand_drawn[i]['id'])+"} }"
+                "\n\label{table:results-network"+str(hand_drawn[i]['id'])+"}\n\end{table}\n")
         f.close()
