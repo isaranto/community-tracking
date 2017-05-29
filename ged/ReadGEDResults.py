@@ -2,6 +2,9 @@ from ged import GedLoad
 from collections import OrderedDict
 
 class ReadGEDResults:
+    """
+    Convert results from GED output to universal format
+    """
     def __init__(self, file_coms, file_output='../data/dblp_ged_results.csv'):
         self.coms = GedLoad(file_coms).comms
         self.dynamic_coms, self.cont = self.read_output(file_output)

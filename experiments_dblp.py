@@ -69,53 +69,53 @@ def run_experiments(data, ground_truth, network_num):
     # f.write(tabulate(all_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
     # f.close()
     # Muturank with all connections - default q
-    mutu5 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='all',
-                         clusters=len(ground_truth), default_q=True)
-    all_res.append(evaluate.get_results(ground_truth, mutu5.dynamic_coms, "Muturank with all connections - default q"
-                                        , mutu5.tfs,
-                                        eval="dynamic", duration=mutu5.duration))
-    all_res.append(evaluate.get_results(ground_truth, mutu5.dynamic_coms, "Muturank with all connections - default "
-                                                                          "q", mutu5.tfs,
-                                        eval="sets", duration=mutu5.duration))
-    all_res.append(evaluate.get_results(ground_truth, mutu5.dynamic_coms, "Muturank with all connections - default "
-                                                                          "q", mutu5.tfs,
-                                        eval="per_tf", duration=mutu5.duration))
-    f = open(results_file, 'a')
-    f.write(tabulate(all_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
-    f.close()
-    # Muturank with next connection - default q
-    mutu6 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='next',
-                         clusters=len(ground_truth), default_q=True)
-    all_res.append(evaluate.get_results(ground_truth, mutu6.dynamic_coms, "Muturank with next connection - default q"
-                                        , mutu6.tfs, eval="dynamic", duration=mutu6.duration))
-    all_res.append(evaluate.get_results(ground_truth, mutu6.dynamic_coms, "Muturank with next connection - default q",
-                                        mutu6.tfs, eval="sets", duration=mutu6.duration))
-    all_res.append(evaluate.get_results(ground_truth, mutu6.dynamic_coms, "Muturank with next connection - default q",
-                                        mutu6.tfs, eval="per_tf", duration=mutu6.duration))
-    f = open(results_file, 'a')
-    f.write(tabulate(all_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
-    f.close()
-    # NNTF
-    fact = TensorFact(data.graphs, num_of_coms=len(ground_truth), threshold=1e-4, seeds=10, overlap=False)
-    all_res.append(evaluate.get_results(ground_truth, fact.dynamic_coms, "NNTF", mutu6.tfs, eval="dynamic",
-                                        duration=fact.duration))
-    all_res.append(evaluate.get_results(ground_truth, fact.dynamic_coms, "NNTF", mutu6.tfs, eval="sets",
-                                        duration=fact.duration))
-    all_res.append(evaluate.get_results(ground_truth, fact.dynamic_coms, "NNTF", mutu6.tfs, eval="per_tf",
-                                        duration=fact.duration))
-    f = open(results_file, 'a')
-    f.write(tabulate(all_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
-    f.close()
-    with open(results_file, 'a') as f:
-        f.write("NNTF\n")
-        f.write("Error: " + str(fact.error) + "Seed: " + str(fact.best_seed)+"\n")
-        f.write("A\n")
-        pprint.pprint(fact.A, stream=f, width=150)
-        f.write("B\n")
-        pprint.pprint(fact.B, stream=f, width=150)
-        f.write("C\n")
-        pprint.pprint(fact.C, stream=f, width=150)
-        pprint.pprint(fact.dynamic_coms, stream=f, width=150)
+    # mutu5 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='all',
+    #                      clusters=len(ground_truth), default_q=True)
+    # all_res.append(evaluate.get_results(ground_truth, mutu5.dynamic_coms, "Muturank with all connections - default q"
+    #                                     , mutu5.tfs,
+    #                                     eval="dynamic", duration=mutu5.duration))
+    # all_res.append(evaluate.get_results(ground_truth, mutu5.dynamic_coms, "Muturank with all connections - default "
+    #                                                                       "q", mutu5.tfs,
+    #                                     eval="sets", duration=mutu5.duration))
+    # all_res.append(evaluate.get_results(ground_truth, mutu5.dynamic_coms, "Muturank with all connections - default "
+    #                                                                       "q", mutu5.tfs,
+    #                                     eval="per_tf", duration=mutu5.duration))
+    # f = open(results_file, 'a')
+    # f.write(tabulate(all_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
+    # f.close()
+    # # Muturank with next connection - default q
+    # mutu6 = Muturank_new(data.graphs, threshold=1e-6, alpha=0.85, beta=0.85, connection='next',
+    #                      clusters=len(ground_truth), default_q=True)
+    # all_res.append(evaluate.get_results(ground_truth, mutu6.dynamic_coms, "Muturank with next connection - default q"
+    #                                     , mutu6.tfs, eval="dynamic", duration=mutu6.duration))
+    # all_res.append(evaluate.get_results(ground_truth, mutu6.dynamic_coms, "Muturank with next connection - default q",
+    #                                     mutu6.tfs, eval="sets", duration=mutu6.duration))
+    # all_res.append(evaluate.get_results(ground_truth, mutu6.dynamic_coms, "Muturank with next connection - default q",
+    #                                     mutu6.tfs, eval="per_tf", duration=mutu6.duration))
+    # f = open(results_file, 'a')
+    # f.write(tabulate(all_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
+    # f.close()
+    # # NNTF
+    # fact = TensorFact(data.graphs, num_of_coms=len(ground_truth), threshold=1e-4, seeds=10, overlap=False)
+    # all_res.append(evaluate.get_results(ground_truth, fact.dynamic_coms, "NNTF", mutu6.tfs, eval="dynamic",
+    #                                     duration=fact.duration))
+    # all_res.append(evaluate.get_results(ground_truth, fact.dynamic_coms, "NNTF", mutu6.tfs, eval="sets",
+    #                                     duration=fact.duration))
+    # all_res.append(evaluate.get_results(ground_truth, fact.dynamic_coms, "NNTF", mutu6.tfs, eval="per_tf",
+    #                                     duration=fact.duration))
+    # f = open(results_file, 'a')
+    # f.write(tabulate(all_res, headers="keys", tablefmt="fancy_grid").encode('utf8') + "\n")
+    # f.close()
+    # with open(results_file, 'a') as f:
+    #     f.write("NNTF\n")
+    #     f.write("Error: " + str(fact.error) + "Seed: " + str(fact.best_seed)+"\n")
+    #     f.write("A\n")
+    #     pprint.pprint(fact.A, stream=f, width=150)
+    #     f.write("B\n")
+    #     pprint.pprint(fact.B, stream=f, width=150)
+    #     f.write("C\n")
+    #     pprint.pprint(fact.C, stream=f, width=150)
+    #     pprint.pprint(fact.dynamic_coms, stream=f, width=150)
     # GED
     import sys
     sys.path.insert(0, '../GED/')

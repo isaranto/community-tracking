@@ -4,6 +4,9 @@ import json
 
 
 class GedLoad:
+    """
+    Load data written from GED
+    """
     def __init__(self, filename="/home/lias/PycharmProjects/GED/test_input_community_edges.json"):
         self.data = self.openFile(filename)
         self.graphs, self.comms = self.getGraphs()

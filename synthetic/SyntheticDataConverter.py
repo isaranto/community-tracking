@@ -41,6 +41,12 @@ class SyntheticDataConverter:
         self.dynamic_truth = self.get_dynamic_coms()
 
     def get_edges(self, nodes, remove_redundant_nodes):
+        """
+        Get graph edges from files
+        :param nodes: 
+        :param remove_redundant_nodes: 
+        :return: 
+        """
         edge_time = {}
         for i, e_file in enumerate(self.edges_files):
             edge_time[i] = []
@@ -56,11 +62,19 @@ class SyntheticDataConverter:
         return edge_time
 
     def add_self_edges(self):
+        """
+        add self loops
+        :return: 
+        """
         for i, graph in self.graphs.iteritems():
             for v in graph.nodes():
                 graph.add_edge(v, v)
 
     def get_comms(self):
+        """
+        Get communities for each timeframe
+        :return: 
+        """
         all_nodes = {i: set() for i in range(self.timeFrames)}
         com_time = {}
         for timeFrame, c_file in enumerate(self.comm_files):
@@ -108,6 +122,10 @@ class SyntheticDataConverter:
         return dyn_communities
 
     def get_dynamic_coms(self):
+        """
+        Get dynamic communities
+        :return: 
+        """
         dynamic_coms = {i: [] for i in self.timeline.keys()}
         for i, d_com_timeline in self.timeline.iteritems():
             new_com = []

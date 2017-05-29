@@ -305,24 +305,6 @@ class Muturank_new:
                     a[t][nodes[i+1], nodes[i]] = 1e-4
         return a
 
-    # def irr_components_time(self, a):
-    #     """
-    #
-    #     :param a:
-    #     :return:
-    #     """
-    #
-    #     graphs = {}
-    #     for t in range(self.tfs):
-    #         edges = []
-    #         for i in range(a[t].shape[0]):
-    #             for j in range(a[t].shape[0]):
-    #                 if a[t][i, j] != 0:
-    #                     edges.append((i, j, a[t][i, j]))
-    #         graphs[t] = nx.Graph()
-    #         graphs[t].add_weighted_edges_from(edges)
-    #     return self.create_adj_tensor(graphs)
-    #@profile
     def prob_t(self, d, j, denom):
         """
         Calculation of probalities p_t (d|j)

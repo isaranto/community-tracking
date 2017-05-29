@@ -3,6 +3,9 @@ import json
 
 
 class GedWrite:
+    """
+    write data in GED compatible format
+    """
     def __init__(self, data, fileName='./data/temp_ged_communities.json'):
         self.fileName = fileName
         self.graphs= data.graphs

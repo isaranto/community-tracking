@@ -43,11 +43,20 @@ class TensorFact:
 
 
     def add_self_edges(self):
+        """
+        Add self edges for each node
+        :return: 
+        """
         for i, graph in self.graphs.iteritems():
             for v in graph.nodes():
                 graph.add_edge(v, v)
 
     def get_fact_info(self, factor):
+        """
+        Print info about the factor(matrix): Min-max values 
+        :param factor: 
+        :return: 
+        """
         for j in range(factor.shape[1]):
             for i in range(factor.shape[0]):
                 if factor[i, j] < 1e-6:
@@ -56,7 +65,6 @@ class TensorFact:
         maxs = ('%f' % x for x in np.nanmax(factor, 0))
         print "min values : ", [float(a) for a in mins]
         print "max values : ", [float(a) for a in maxs]
-
 
     def create_dtensor(self, graphs):
         """
@@ -95,6 +103,11 @@ class TensorFact:
         return T
 
     def nnfact_repeat(self, num_of_seeds):
+        """
+        Repeat factorization for num_of_seeds times.
+        :param num_of_seeds: 
+        :return: 
+        """
         seed_list = np.random.randint(0, 4294967295, num_of_seeds)
         min_error = 1
         for seed in seed_list:
@@ -119,6 +132,12 @@ class TensorFact:
         return A, B, C
 
     def tensor_decomp(self, seed, random_init=True):
+        """
+        Decompose Tensor
+        :param seed: 
+        :param random_init: 
+        :return: 
+        """
         # setting seed in order to reproduce experiment
         np.random.seed(seed)
         if random_init:
@@ -198,6 +217,11 @@ class TensorFact:
         return dynamic_coms
 
     def get_timeline(self, C):
+        """
+        Get timeline for each dynamic community
+        :param C: 
+        :return: 
+        """
         timeline = {}
         for t in range(C.shape[0]):
             for c in range(C.shape[1]):
@@ -209,6 +233,11 @@ class TensorFact:
         return timeline
 
     def aggregated_network_matrix(self):
+        """
+        Create aggregated single timeframe network. Add an edge between i,j if 
+         there exists an edge between them in any timeframe.
+        :return: 
+        """
         agg = sparse.eye(len(self.node_ids), dtype=np.float32,format="dok")
         for i in range(len(self.node_ids)):
             for j in range(i):
@@ -218,6 +247,11 @@ class TensorFact:
         return agg
 
     def get_Finit(self, seed):
+        """
+        initialize factors A, B, C
+        :param seed: 
+        :return: 
+        """
         agg_network = self.aggregated_network_matrix()
         # A_init = sparse.dok_matrix((len(self.node_ids),len(self.node_ids)), dtype=np.float32)
         A_init = np.zeros((len(self.node_ids), self.num_of_coms))
