@@ -1,7 +1,9 @@
-# Tracking the evolution of communities in Dynamic Social Networks
+# Tracking the Evolution of Communities in Dynamic Social Networks
 
-Our  intention  is  to  transform  the  problem  of  dynamic  community  finding  to  that  of  finding
-communities in poly-relational network
+This repository includes the code developed around the MSc Thesis:
+
+> Ilias Sarantopoulos, “Tracking the Evolution of Communities in Dynamic Social Networks” MSc Thesis, Athens University of Economics
+and Business, 2017  
 
 ## Getting Started
 
@@ -14,8 +16,9 @@ All packages available through pip can be found in the file 'requirements.txt'. 
 ```
 pip install -r requirements.txt
 ```
-There are 3 more external packages used: 'GED' is the python repository available in "demokritos-github" for Group Evolution Discovery. 'omni' is the C++ package
-for NMI evaluation and 'ncp' is the package available in 'gauvin github' for Non Negative Tensor Factorization with the least alternate squares method.
+There are 3 more external packages used: 'GED' is the python repository available in 
+[demokritos-github](https://github.com/iit-Demokritos/community-Tracking-GED "demokritos-github") for Group Evolution Discovery. 'omni' is the C++ package
+for NMI evaluation developed by  and available in [onmi-Github-repo](https://github.com/aaronmcdaid/Overlapping-NMI "NMI-Github") and 'ncp' is the package available in [NNTF-Github-repo](https://github.com/panisson/ntf-school "NNTF") for Non Negative Tensor Factorization with the least alternate squares method.
 
 ### Installing
 

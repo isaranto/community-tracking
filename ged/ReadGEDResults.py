@@ -18,7 +18,6 @@ class ReadGEDResults:
             if event in {'continuing', 'growing', 'shrinking'}:
                 cont[(int(tf1), int(com1))] = (int(tf2), int(com2))
                 cont[(int(tf2), int(com2))] = False
-        print cont
         dynamic_coms_list = []
 
         def dynamic_com(tf, com, new_com):
