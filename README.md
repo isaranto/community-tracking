@@ -22,5 +22,5 @@ for NMI evaluation developed by  and available in [onmi-Github-repo](https://git
 
 ### Running Experiments
 
-Each of the scripts in the root directory that starts with "experiments_*" describes a full set of comparative experiments for a specific dataset. The user should change the path to the files where the dataset exists.
-Running the script will produce a txt file "results_*" which will contain the evaluated results of each method (GED, NNTF, Muturank). 
+Each of the scripts in the root directory that starts with "experiments_{dataset}" describes a full set of comparative experiments for a specific dataset. The user should change the path to the files where the dataset exists.
+Running the script will produce a txt file "results_{dataset}" which will contain the evaluated results of each method (GED, NNTF, Muturank). 
