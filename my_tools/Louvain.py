@@ -3,7 +3,12 @@ import igraph as ig
 import louvain_igraph as louvain
 import community
 
+
 class Louvain:
+    """
+    Run the louvain method to detect communities in each timeframe.
+    The output can be used as input for a dynamic community finding method e.g. GED.
+    """
     def __init__(self, graphs):
         self.graphs = graphs
         self.communities = {i: {} for i in graphs.keys()}
@@ -16,25 +21,6 @@ class Louvain:
             self.communities[tf] = self.run_louvain(graph)
 
     def run_louvain(self, G):
-        # comms = []
-        # print self.node_pos
-        # G_new = ig.Graph()
-        # print G.nodes()
-        # print G.edges()
-        # G_new.add_vertices([self.node_pos[v] for v in G.nodes()])
-        # try:
-        #     G_new.add_edges([(self.node_pos[int(e1)], self.node_pos[int(e2)]) for (e1, e2) in G.edges()])
-        # except Exception:
-        #     print self.node_pos[int(e2)]
-        #     raise Exception
-        # opt = louvain.Optimiser()
-        # partition = opt.find_partition(graph=G_new, partition_class=louvain.SignificanceVertexPartition)
-        # partitions = list(partition)
-        # for i, com in enumerate(partitions):
-        #     for n, node in enumerate(com):
-        #         partitions[i][n] = self.node_ids[node]
-        # com_dict = {i: com for i, com in enumerate(partitions)}
-        # print com_dict
         com_dict = {}
         partition = community.best_partition(G)
         for node, c in partition.iteritems():

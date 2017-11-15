@@ -2,6 +2,10 @@ from __future__ import division
 
 
 class Evaluation:
+    """
+    Used to evaluate Synthetic Data created with the generator. Information about falsely classified events
+    is printed.
+    """
     def __init__(self, sd):
         self.events = sd.events
         self.comms = sd.communities

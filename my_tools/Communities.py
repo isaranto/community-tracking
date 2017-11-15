@@ -1,6 +1,12 @@
 import networkx as nx
 import community
+
+
 class Communities:
+    """
+    Used to run a community detection algorithm on each timeframe.
+    K Clique and the Louvain method are implemented.
+    """
     def __init__(self, graphs, type="louvain"):
         self.graphs = graphs
         self.communities = {i: {} for i in graphs.keys()}
